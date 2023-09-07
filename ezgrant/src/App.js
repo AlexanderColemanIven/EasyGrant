@@ -1,18 +1,29 @@
 import React, { useEffect, useState, Component } from 'react';
 
 import './App.css';
+
+//const oracledb = require('oracledb');
+//oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+
 class App extends Component {
   constructor(props) {
     super(props);
     // Initialize state first
     this.state = {
-        users: [],
-        err: null,
-        isLoading: false
+        response: '',
+        post: '',
+        responseToPost: '',
      }
     }
   
     componentDidMount() {
+
+      this.callApi()
+      .then(res => this.setState({ response: res.express }))
+      .catch(err => console.log(err));
+
+      /*
+
       this.setState({ isLoading: true })
       let api_url = 'https://api.github.com/users';
       fetch(api_url).then(res => {
@@ -36,8 +47,32 @@ class App extends Component {
           })
       }
       );
+      //connectDB();
+      */
     
     }
+
+    callApi = async () => {
+      const response = await fetch('/api/hello');
+      const body = await response.json();
+      if (response.status !== 200) throw Error(body.message);
+      
+      return body;
+    };
+    
+    handleSubmit = async e => {
+      e.preventDefault();
+      const response = await fetch('/api/world', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: this.state.post }),
+      });
+      const body = await response.text();
+      
+      this.setState({ responseToPost: body });
+    };
 
     // This actually renders the data to the DOM
     render() {
@@ -56,19 +91,24 @@ class App extends Component {
       }
       return (
       <div>
-        <header>
-          Idk, heres a list of sample github users to demo what an API req will look like:
+        <header class="title">
+          Here is communication with a server (will be replaced by DB)
         </header>
-          {/* Here you can check whether the users array contains data or not. */}
-          { users.length > 0 ?
-              <ul>
-                  {users.map( user => (
-                      <li key={user.id} >
-                          { user.login }
-                      </li>
-                  ))}
-              </ul>
-              : <div> No user found! </div> }
+        <div class="server-response">
+          <p>{this.state.response}</p>
+        <form onSubmit={this.handleSubmit}>
+          <p>
+            <strong>Post to Server:</strong>
+          </p>
+          <input
+            type="text"
+            value={this.state.post}
+            onChange={e => this.setState({ post: e.target.value })}
+          />
+          <button type="submit">Submit</button>
+        </form>
+        <p>{this.state.responseToPost}</p>
+        </div>
       </div>
       )
   }
@@ -76,4 +116,23 @@ class App extends Component {
 
 }
 
+/*
+async function connectDB(){
+  try{
+  let conn = await oracledb.getConnection( {
+    user:"ADMIN",
+    password:"Bucknell17837",
+    connectionString:"(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-ashburn-1.oraclecloud.com))(connect_data=(service_name=g2751c4161aebe7_ezgrantdatabase_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
+  });
+
+  const data = await conn.execute(`SELECT * FROM *`);
+
+  console.log(data.rows);
+  }catch(error){
+    console.log(error);
+  }
+}
+*/
+
 export default App;
+

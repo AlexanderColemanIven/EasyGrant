@@ -1,20 +1,21 @@
-/*
-This does nothing rn but eventually we want to connect to database
-so we are gonna need a server connection, here im using express js
-but we can use something else if it works better for the project
-
-*/
-
 const express = require('express');
+const bodyParser = require('body-parser');
+
 const app = express();
-const port = 8080; //listening port
+const port = process.env.PORT || 4000;
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-//api get request
-app.get('/', (req, res) => {
-  res.send('Hello World!')
+app.get('/api/hello', (req, res) => {
+  res.send({ express: 'Hello From Express' });
 });
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`)
+app.post('/api/world', (req, res) => {
+  console.log(req.body);
+  res.send(
+    `I received your POST request. This is what you sent me: ${req.body.post}`,
+  );
 });
+
+app.listen(port, () => console.log(`Listening on port ${port}`));
