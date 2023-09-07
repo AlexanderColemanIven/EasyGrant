@@ -2,4 +2,4 @@
 ## EasyGrant
 
 ### Running the app
-In the `ezgrant` directory run `npm run start`
+In the `ezgrant` directory run `npm run dev`
