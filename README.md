@@ -27,7 +27,8 @@ to: `WALLET_LOCATION = (SOURCE = (METHOD = file) (METHOD_DATA = (DIRECTORY="../e
 to: `require('dotenv').config({path : '../ezgrant/build-resource/wallet/.env'});`
 3) Download the Oracle Instant Client Library for your OS here: [https://www.oracle.com/cis/database/technologies/instant-client/downloads.html](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
   - Place the UNZIPPED file into your `Downloads` folder if on Macos, Place it in `C:\\Oracle\[HERE]` if on Windows
-4) In the `ezgrant` directory run `npm run start`
+4) Run `npm i` to install node_modules
+5) In the `ezgrant` directory run `npm run start`
 
 ## Prerequisites [IMPORTANT]
 - Have Docker installed on your computer
