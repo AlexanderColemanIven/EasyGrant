@@ -4,7 +4,7 @@
 ### Running the app
 The `PATH` variables are all now setup for the Docker App, if you want to
 run this code locally you must change the paths found in `test-connect.js`, `sqlnet.ora`, and
-set your `TNS_ADMIN` env variable. 
+set your `TNS_ADMIN` env variable if using custom paths. 
  ## How to run the React code with Docker:
 1) Copy the `dev` script in `package.json` to the `start` script
 2) `cd` into the `ezgrant` directory
