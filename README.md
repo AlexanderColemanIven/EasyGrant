@@ -5,7 +5,7 @@
 The `PATH` variables are all now setup for the Docker App, if you want to
 run this code locally you must change the paths found in `test-connect.js`, `sqlnet.ora`, and
 set your `TNS_ADMIN` env variable. 
- ## How to Run the React code with Docker:
+ ## How to run the React code with Docker:
 1) Copy the `dev` script in `package.json` to the `start` script
 2) `cd` into the `ezgrant` directory, NOT `EasyGrant` yes its confusing ill fix it later
 3) Build using:
@@ -21,7 +21,7 @@ set your `TNS_ADMIN` env variable.
    docker run -p 8080:8080 -ti --rm oraclelinux7-instantclient:12.2
    ```
    (saves space on your computer)
-## How to Run the Database code with Docker:
+## How to run the Database code with Docker:
 1) Ensure the `start` script in `package.json` is `node ./src/test-connect.js`
 2) `cd` into the `ezgrant` directory, NOT `EasyGrant` yes its confusing ill fix it later
 3) Build using:
@@ -37,7 +37,7 @@ set your `TNS_ADMIN` env variable.
    docker run -ti --rm oraclelinux7-instantclient:12.2
    ```
    (saves space on your computer)
-## How to Run the React/Database code *Locally*:
+## How to run the React/Database code *Locally*:
 1) Find `build-resources/wallet/sqlnet.ora`
   - Change
     ```
