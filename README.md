@@ -7,7 +7,7 @@ run this code locally you must change the paths found in `test-connect.js`, `sql
 set your `TNS_ADMIN` env variable. 
  ## How to run the React code with Docker:
 1) Copy the `dev` script in `package.json` to the `start` script
-2) `cd` into the `ezgrant` directory, NOT `EasyGrant` yes its confusing ill fix it later
+2) `cd` into the `ezgrant` directory
 3) Build using:
    ```
    docker buildx build --platform linux/amd64 --pull -t oraclelinux7-instantclient:12.2 .
@@ -23,7 +23,7 @@ set your `TNS_ADMIN` env variable.
    (saves space on your computer)
 ## How to run the Database code with Docker:
 1) Ensure the `start` script in `package.json` is `node ./src/test-connect.js`
-2) `cd` into the `ezgrant` directory, NOT `EasyGrant` yes its confusing ill fix it later
+2) `cd` into the `ezgrant` directory
 3) Build using:
    ```
    docker buildx build --platform linux/amd64 --pull -t oraclelinux7-instantclient:12.2 .
