@@ -17,6 +17,17 @@ set your `TNS_ADMIN` env variable.
 3) Build using `docker buildx build --platform linux/amd64 --pull -t oraclelinux7-instantclient:12.2 .`
 4) Run `docker run -ti oraclelinux7-instantclient:12.2  ` or \
  `docker run -ti --rm oraclelinux7-instantclient:12.2` (saves space on ur computer)
+## How to Run the React/Database code *Locally*:
+1) Find `build-resources/wallet/sqlnet.ora`
+  - Change `WALLET_LOCATION = (SOURCE = (METHOD = file) (METHOD_DATA = (DIRECTORY="../app/build-resource/wallet")))` \
+to: `WALLET_LOCATION = (SOURCE = (METHOD = file) (METHOD_DATA = (DIRECTORY="../ezgrant/build-resource/wallet")))`
+  - Change `SSL_SERVER_DN_MATCH=no` to `SSL_SERVER_DN_MATCH=yes`
+2) Find `src/test-connect.js`
+  - Change `require('dotenv').config({path : '../app/build-resource/wallet/.env'});` \
+to: `require('dotenv').config({path : '../ezgrant/build-resource/wallet/.env'});`
+3) Download the Oracle Instant Client Library for your OS here: [https://www.oracle.com/cis/database/technologies/instant-client/downloads.html](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
+  - Place the UNZIPPED file into your `Downloads` folder if on Macos, Place it in `C:\\Oracle\[HERE]` if on Windows
+4) In the `ezgrant` directory run `npm run start`
 
 ## Prerequisites [IMPORTANT]
 - Have Docker installed on your computer
