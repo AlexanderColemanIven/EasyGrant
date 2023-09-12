@@ -20,7 +20,7 @@ set your `TNS_ADMIN` env variable.
    ```
    docker run -p 8080:8080 -ti --rm oraclelinux7-instantclient:12.2
    ```
-   (saves space on ur computer)
+   (saves space on your computer)
 ## How to Run the Database code with Docker:
 1) Ensure the `start` script in `package.json` is `node ./src/test-connect.js`
 2) `cd` into the `ezgrant` directory, NOT `EasyGrant` yes its confusing ill fix it later
@@ -36,7 +36,7 @@ set your `TNS_ADMIN` env variable.
    ```
    docker run -ti --rm oraclelinux7-instantclient:12.2
    ```
-   (saves space on ur computer)
+   (saves space on your computer)
 ## How to Run the React/Database code *Locally*:
 1) Find `build-resources/wallet/sqlnet.ora`
   - Change
