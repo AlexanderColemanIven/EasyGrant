@@ -67,6 +67,7 @@ set your `TNS_ADMIN` env variable.
 3) Download the Oracle Instant Client Library for your OS here: [https://www.oracle.com/cis/database/technologies/instant-client/downloads.html](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
   - MacOS: Place the UNZIPPED file into your `Downloads` folder (expects: `/Downloads/instantclient_19_8`)
   - Windows: Place it in `C:\\Oracle\[HERE]`  (expects: `C:\\oracle\\instantclient_19_17`)
+  - If you want to place your instant-client lib in a different location you must update your `PATH` variables accordingly
 4) Run `npm i` to install node_modules
 5) In the `ezgrant` directory run `npm run start`
 
