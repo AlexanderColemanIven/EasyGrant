@@ -9,22 +9,55 @@ set your `TNS_ADMIN` env variable.
 1) Copy the `dev` script in `package.json` to the `start` script
 2) `cd` into the `ezgrant` directory, NOT `EasyGrant` yes its confusing ill fix it later
 3) Build using `docker buildx build --platform linux/amd64 --pull -t oraclelinux7-instantclient:12.2 .`
-4) Run `docker run -p 8080:8080 -ti oraclelinux7-instantclient:12.2   ` or \
- `docker run -p 8080:8080 -ti --rm oraclelinux7-instantclient:12.2` (saves space on ur computer)
+4) Run
+   ```
+   docker run -p 8080:8080 -ti oraclelinux7-instantclient:12.2
+   ```
+   or
+   ```
+   docker run -p 8080:8080 -ti --rm oraclelinux7-instantclient:12.2
+   ```
+   (saves space on ur computer)
 ## How to Run the Database code with Docker:
 1) Ensure the `start` script in `package.json` is `node ./src/test-connect.js`
 2) `cd` into the `ezgrant` directory, NOT `EasyGrant` yes its confusing ill fix it later
 3) Build using `docker buildx build --platform linux/amd64 --pull -t oraclelinux7-instantclient:12.2 .`
-4) Run `docker run -ti oraclelinux7-instantclient:12.2  ` or \
- `docker run -ti --rm oraclelinux7-instantclient:12.2` (saves space on ur computer)
+4) Run
+   ```
+   docker run -ti oraclelinux7-instantclient:12.2
+   ```
+   or
+   ```
+   docker run -ti --rm oraclelinux7-instantclient:12.2
+   ```
+   (saves space on ur computer)
 ## How to Run the React/Database code *Locally*:
 1) Find `build-resources/wallet/sqlnet.ora`
-  - Change `WALLET_LOCATION = (SOURCE = (METHOD = file) (METHOD_DATA = (DIRECTORY="../app/build-resource/wallet")))` \
-to: `WALLET_LOCATION = (SOURCE = (METHOD = file) (METHOD_DATA = (DIRECTORY="../ezgrant/build-resource/wallet")))`
-  - Change `SSL_SERVER_DN_MATCH=no` to `SSL_SERVER_DN_MATCH=yes`
+  - Change
+    ```
+    WALLET_LOCATION = (SOURCE = (METHOD = file) (METHOD_DATA = (DIRECTORY="../app/build-resource/wallet")))
+    ```
+    to:
+    ```
+    WALLET_LOCATION = (SOURCE = (METHOD = file) (METHOD_DATA = (DIRECTORY="../ezgrant/build-resource/wallet")))
+    ```
+  - Change
+    ```
+    SSL_SERVER_DN_MATCH=no
+    ```
+    to
+    ```
+    SSL_SERVER_DN_MATCH=yes
+    ```
 2) Find `src/test-connect.js`
-  - Change `require('dotenv').config({path : '../app/build-resource/wallet/.env'});` \
-to: `require('dotenv').config({path : '../ezgrant/build-resource/wallet/.env'});`
+  - Change
+    ```
+    require('dotenv').config({path : '../app/build-resource/wallet/.env'});
+    ```
+    to:
+    ```
+    require('dotenv').config({path : '../ezgrant/build-resource/wallet/.env'});
+    ```
 3) Download the Oracle Instant Client Library for your OS here: [https://www.oracle.com/cis/database/technologies/instant-client/downloads.html](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
   - Place the UNZIPPED file into your `Downloads` folder if on Macos, Place it in `C:\\Oracle\[HERE]` if on Windows
 4) Run `npm i` to install node_modules
