@@ -10,15 +10,15 @@ set your `TNS_ADMIN` env variable if using custom paths.
 2) `cd` into the `ezgrant` directory
 3) Build using:
    ```
-   docker buildx build --platform linux/amd64 --pull -t oraclelinux7-instantclient:12.2 .
+   docker buildx build --platform linux/amd64 --pull -t ezgrants .
    ```
 5) Run
    ```
-   docker run -p 8080:8080 -ti oraclelinux7-instantclient:12.2
+   docker run -p 8080:8080 -ti ezgrants
    ```
    or
    ```
-   docker run -p 8080:8080 -ti --rm oraclelinux7-instantclient:12.2
+   docker run -p 8080:8080 -ti --rm ezgrants
    ```
    (saves space on your computer)
 ## How to run the Database code with Docker:
@@ -26,15 +26,15 @@ set your `TNS_ADMIN` env variable if using custom paths.
 2) `cd` into the `ezgrant` directory
 3) Build using:
    ```
-   docker buildx build --platform linux/amd64 --pull -t oraclelinux7-instantclient:12.2 .
+   docker buildx build --platform linux/amd64 --pull -t ezgrants .
    ```
 4) Run
    ```
-   docker run -ti oraclelinux7-instantclient:12.2
+   docker run -ti ezgrants
    ```
    or
    ```
-   docker run -ti --rm oraclelinux7-instantclient:12.2
+   docker run -ti --rm ezgrants
    ```
    (saves space on your computer)
 ## How to run the React/Database code *Locally*:
