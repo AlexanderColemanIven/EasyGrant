@@ -5,7 +5,7 @@
 The `PATH` variables are all now setup for the Docker App, if you want to
 run this code locally you must change the paths found in `test-connect.js`, `sqlnet.ora`, and
 set your `TNS_ADMIN` env variable if using custom paths. 
- ## How to run the React code with Docker:
+ ## How to run the code with Docker:
 1) Copy the `dev` script in `package.json` to the `start` script
 2) `cd` into the `ezgrant` directory
 3) Build using:
@@ -21,22 +21,7 @@ set your `TNS_ADMIN` env variable if using custom paths.
    docker run -p 8080:8080 -ti --rm ezgrants
    ```
    (saves space on your computer)
-## How to run the Database code with Docker:
-1) Ensure the `start` script in `package.json` is `node ./src/test-connect.js`
-2) `cd` into the `ezgrant` directory
-3) Build using:
-   ```
-   docker buildx build --platform linux/amd64 --pull -t ezgrants .
-   ```
-4) Run
-   ```
-   docker run -ti ezgrants
-   ```
-   or
-   ```
-   docker run -ti --rm ezgrants
-   ```
-   (saves space on your computer)
+   
 ## How to run the React/Database code *Locally*:
 1) Find `build-resources/wallet/sqlnet.ora`
   - Change
@@ -55,14 +40,14 @@ set your `TNS_ADMIN` env variable if using custom paths.
     ```
     SSL_SERVER_DN_MATCH=yes
     ```
-2) Find `src/test-connect.js`
+2) Find `src/services/database-services.js`
   - Change
     ```
-    require('dotenv').config({path : '../app/build-resource/wallet/.env'});
+    require('dotenv').config({path : '../../app/build-resource/wallet/.env'});
     ```
     to:
     ```
-    require('dotenv').config({path : '../ezgrant/build-resource/wallet/.env'});
+    require('dotenv').config({path : '../../ezgrant/build-resource/wallet/.env'});
     ```
 3) Download the Oracle Instant Client Library for your OS here: [https://www.oracle.com/cis/database/technologies/instant-client/downloads.html](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
   - MacOS: Place the UNZIPPED file into your `Downloads` folder (expects: `/Downloads/instantclient_19_8`)
