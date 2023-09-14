@@ -1,6 +1,4 @@
 import React, { useEffect, useState, Component } from 'react';
-
-
 import './App.css';
 
 //const oracledb = require('oracledb');

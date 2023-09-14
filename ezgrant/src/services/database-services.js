@@ -1,10 +1,17 @@
 Error.stackTraceLimit = 50;
-require('dotenv').config({path : '../app/build-resource/wallet/.env'});
+require('dotenv').config({path : '../../app/build-resource/wallet/.env'});
 const oracledb = require('oracledb');
-const dbConfig = require('../config/dbconfig.js');
+const dbConfig = require('dbconfig');
 
+console.log(dbConfig.ezgrantPool.user);
 
-console.log(dbConfig.user);
+function doRelease(connection) {
+  connection.release(function (err) {
+    if (err) {
+      console.error(err.message);
+    }
+  });
+}
 
 async function init() {
     if (process.env.NODE_ORACLEDB_DRIVER_MODE === 'thick') {
@@ -25,22 +32,18 @@ async function init() {
     try {
       // Create a connection pool which will later be accessed via the
       // pool cache as the 'default' pool.
-      await oracledb.createPool({
-        user: dbConfig.user,
-        password: dbConfig.password,
-        connectString: dbConfig.connectString,
-        // TODO: There are a lot of other param options here to explore 
-      });
+      await oracledb.createPool(dbConfig.ezgrantPool);
       console.log('Connection pool started');
   
       // Now the pool is running, it can be used
-      await dostuff();
+      let retval;
+      retval = await dostuff();
+      retval = retval ? 'Current date is: ' + retval.rows[0].CURRENT_DATE : 'Nothing found';
+      return retval;
   
     } catch (err) {
       console.error('init() error: ' + err.message);
-    } finally {
-      await closePoolAndExit();
-    }
+    } 
   }
   
   async function dostuff() {
@@ -53,41 +56,15 @@ async function init() {
       const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
       const result = await connection.execute(sql, binds, options);
       console.log(result);
+      return result;
       // oracledb.getPool().logStatistics(); // show pool statistics.  pool.enableStatistics must be true
     } catch (err) {
       console.error(err);
     } finally {
       if (connection) {
-        try {
-          // Put the connection back in the pool
-          await connection.close();
-        } catch (err) {
-          console.error(err);
-        }
+        doRelease(connection);
       }
     }
   }
-  
-  async function closePoolAndExit() {
-    console.log('\nTerminating');
-    try {
-      // Get the pool from the pool cache and close it when no
-      // connections are in use, or force it closed after 10 seconds.
-      await oracledb.getPool().close(10);
-      console.log('Pool closed');
-      process.exit(0);
-    } catch (err) {
-      console.error(err.message);
-      process.exit(1);
-    }
-  }
-  
-  process
-    // honest to god I have no idea what these really do 
-    // but its req as per the documentation
-    .once('SIGTERM', closePoolAndExit)
-    .once('SIGINT',  closePoolAndExit);
-  
-  init();
-  
-  //run();
+
+module.exports.init = init;
