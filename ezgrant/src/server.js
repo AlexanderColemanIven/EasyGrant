@@ -10,7 +10,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/api/hello', async (req, res) => {
-  res.send({express: await dbConnect.init()});
+  await dbConnect.initialize().then(async () => {
+    const sql = `SELECT CURRENT_DATE FROM dual WHERE :b = 1`;
+    const binds = [1];
+    const options = { outFormat: null };
+
+    res.send({express: await dbConnect.simpleExecute(sql, binds, options)});
+  });
+  
 });
 
 app.post('/api/world', (req, res) => {
