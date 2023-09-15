@@ -21,13 +21,24 @@ if (process.env.NODE_ORACLEDB_DRIVER_MODE === 'thick') {
 
 async function initialize() {
   console.log("Connecting as user: " + dbConfig.ezgrantPool.user);
-  await oracledb.createPool(dbConfig.ezgrantPool);
+  try {
+    await oracledb.createPool(dbConfig.ezgrantPool);
+  }catch(e){
+    console.log(e);
+    initialize();
+  }
+  
 }
 
 module.exports.initialize = initialize;
 
 async function close() {
-  await oracledb.getPool().close(0);
+  try{
+    await oracledb.getPool().close(0);
+  }catch(e){
+    //do nothing
+  }
+  
 }
 
 module.exports.close = close;
@@ -41,7 +52,7 @@ async function simpleExecute(statement, binds = [], opts = {}) {
   try {
     conn = await oracledb.getConnection();
     result = await conn.execute(statement, binds, opts);
-    result = result ? 'Current date is: ' + result.rows[0].CURRENT_DATE : 'Fetching...';    
+    result = result.rows;   
     return (result);
   } catch (err) {
     console.error(err);

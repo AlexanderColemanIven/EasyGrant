@@ -53,8 +53,8 @@
     "build:dev": "webpack --mode=development",
     "build:prod": "webpack --mode=production --node-env=production",
     "watch": "webpack --watch",
-    "server": "node --experimental-modules --es-module-specifier-resolution=node src/server.js",
-    "client": "PORT=8080 react-scripts --experimental-modules --es-module-specifier-resolution=node start",
+    "server": "node src/server.js",
+    "client": "PORT=8080 react-scripts start",
     "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\""
   },
   "eslintConfig": {
