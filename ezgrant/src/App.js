@@ -11,52 +11,23 @@ class App extends Component {
     this.state = {
         response: '',
         post: '',
-        responseToPost: '',
+        responseToPost: [],
      }
     }
   
     componentDidMount() {
 
       this.callApi()
-      .then(res => this.setState({ response: res.express }))
+      .then(res => this.setState({ response: res.express}))
       .catch(err => console.log(err));
-
-      /*
-
-      this.setState({ isLoading: true })
-      let api_url = 'https://api.github.com/users';
-      fetch(api_url).then(res => {
-        // Handle if fetch gives a 404 error
-        if(res.status >= 400) {
-            throw new Error("Server responds with error!");
-        }
-        return res.json();
-      }).then(
-        users => {
-          this.setState({
-              users,
-              isLoading: false
-          })
-      },
-      // Idk man just handle any weird errors
-      err => {
-          this.setState({
-              err,
-              isLoading: false
-          })
-      }
-      );
-      //connectDB();
-      */
-    
     }
 
     callApi = async () => {
-      const response = await fetch('/api/hello');
-      const body = await response.json();
+      const response = await fetch('/api/hello')[0];
+      const body = await response
       if (response.status !== 200) throw Error(body.message);
       
-      return body;
+      return JSON.stringify(body);
     };
     
     handleSubmit = async e => {
@@ -68,9 +39,8 @@ class App extends Component {
         },
         body: JSON.stringify({ post: this.state.post }),
       });
-      const body = await response.text();
-      
-      this.setState({ responseToPost: body });
+      const body = await response.json();
+      this.setState({ responseToPost: Object.entries(body.express) });
     };
 
     // This actually renders the data to the DOM
@@ -91,7 +61,7 @@ class App extends Component {
       return (
       <div>
         <header class="title">
-          Here is communication with a server (will be replaced by DB)
+          Communicating with the Database
         </header>
         <div class="server-response">
           <p>{this.state.response}</p>
@@ -106,7 +76,9 @@ class App extends Component {
           />
           <button type="submit">Submit</button>
         </form>
-        <p>{this.state.responseToPost}</p>
+        <div>{this.state.responseToPost.map(([object_key,value], index) => {
+          return <li key={index}>{object_key}: {value}</li>;
+        })}</div>
         </div>
       </div>
       )
@@ -114,24 +86,6 @@ class App extends Component {
   
 
 }
-
-/*
-async function connectDB(){
-  try{
-  let conn = await oracledb.getConnection( {
-    user:"ADMIN",
-    password:"Bucknell17837",
-    connectionString:"(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.us-ashburn-1.oraclecloud.com))(connect_data=(service_name=g2751c4161aebe7_ezgrantdatabase_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
-  });
-
-  const data = await conn.execute(`SELECT * FROM *`);
-
-  console.log(data.rows);
-  }catch(error){
-    console.log(error);
-  }
-}
-*/
 
 export default App;
 

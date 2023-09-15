@@ -9,22 +9,22 @@ const port = process.env.PORT || 4000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/api/hello', async (req, res) => {
-  await dbConnect.initialize().then(async () => {
-    const sql = `SELECT CURRENT_DATE FROM dual WHERE :b = 1`;
-    const binds = [1];
-    const options = { outFormat: null };
+dbConnect.close();
 
-    res.send({express: await dbConnect.simpleExecute(sql, binds, options)});
-  });
-  
+app.get('/api/hello', (req, res) => {
+  res.send({express: 'Hello!'});
 });
 
-app.post('/api/world', (req, res) => {
-  console.log(req.body);
-  res.send(
-    `I received your POST request. This is what you sent me: ${req.body.post}`,
-  );
+app.post('/api/world', async (req, res) => {
+  await dbConnect.initialize().then(async () => {
+    let sql = `SELECT * FROM GRANTS`;
+    const binds = [];
+    const options = { outFormat: null };
+
+    let retval = await dbConnect.simpleExecute(sql, binds, options);
+
+    res.send({express: retval[0]});
+  });
 });
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
