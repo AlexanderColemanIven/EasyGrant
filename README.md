@@ -68,4 +68,15 @@ set your `TNS_ADMIN` env variable if using custom paths.
   - You can and SHOULD delete containers after running the code as you have to build each time you make a change (not needed if using `--rm` flag in your run command)
 - You may need to run `npm i docker` if on Macos
 
+## Pushing Code Changes
+1) `git checkout -b [branch_name]`, the branch_name should be descriptive of the change being made
+2) `git add -`, `git commit -m "[descriptive commit message]`
+3) `git push --set-upstream origin [branch_name]`
+4) Now go to the GitHub repo and you should see this <img width="923" alt="pullrequest" src="https://github.com/ColeHausman/EasyGrant/assets/55408275/db81082b-ee2c-4fc2-a738-6f723579f497">
+5) Click "Compare & Pull Request", this will take you to a PR template I made, fill out the information that is applicable \
+for the checkboxes you can place an X between the brackets like so: "[X]"
+6) Please wait for someone to review your pull request unless its trivial
+7) If your PR for some reason doesnt have a big green box that says "Able To Merge" pls contact Cole
+8) Once you merge you should see a button to delete the branch, go ahead and click that
+9) You're done!
 
