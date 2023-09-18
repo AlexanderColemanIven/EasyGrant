@@ -1,13 +1,11 @@
 import React, { useEffect, useState, Component } from 'react';
 import './App.css';
-
-//const oracledb = require('oracledb');
-//oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+import './grant-query';
+import { Grant } from './grant-query';
 
 class App extends Component {
   constructor(props) {
     super(props);
-    // Initialize state first
     this.state = {
         response: '',
         post: '',
@@ -23,8 +21,8 @@ class App extends Component {
     }
 
     callApi = async () => {
-      const response = await fetch('/api/hello')[0];
-      const body = await response
+      const response = await fetch('/api/hello');
+      const body = await response.text();
       if (response.status !== 200) throw Error(body.message);
       
       return JSON.stringify(body);
@@ -40,51 +38,48 @@ class App extends Component {
         body: JSON.stringify({ post: this.state.post }),
       });
       const body = await response.json();
-      this.setState({ responseToPost: Object.entries(body.express) });
+      if (body.express){
+        let results = [];
+        body.express.map((obj) => {
+          results.push(Object.entries(obj));
+        });
+        this.setState({responseToPost: results});
+      }else {
+        this.setState({responseToPost: [""]});
+      }
     };
 
     // This actually renders the data to the DOM
     render() {
-      // Extract states in the local variable (state is confusing dw about it)
-      let {users, err, isLoading} = this.state;
-      if(err) {
-          // Render the error message cause why make you open the console
-          return (
-          <div> { err.message } </div>
-          )
-      }
-      if(isLoading) {
-          return (
-          <div> Loading... </div>
-          )
-      }
+      let {response, post, responseToPost} = this.state;
+      console.log(responseToPost);
       return (
       <div>
         <header class="title">
-          Communicating with the Database
+          EasyGrant$
         </header>
         <div class="server-response">
-          <p>{this.state.response}</p>
+          <p>{response}</p>
         <form onSubmit={this.handleSubmit}>
           <p>
             <strong>Post to Server:</strong>
           </p>
           <input
             type="text"
-            value={this.state.post}
+            value={post}
             onChange={e => this.setState({ post: e.target.value })}
           />
           <button type="submit">Submit</button>
+          
         </form>
-        <div>{this.state.responseToPost.map(([object_key,value], index) => {
-          return <li key={index}>{object_key}: {value}</li>;
-        })}</div>
+        <div>
+          {responseToPost.map((obj) => {
+          return <Grant grant={obj}></Grant>;})}
+          </div>
         </div>
       </div>
       )
-  }
-  
-
+    }
 }
 
 export default App;
