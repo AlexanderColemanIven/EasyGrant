@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-require('dotenv').config({path : '../app/build-resource/wallet/.env'});
+require('dotenv').config({path : '../../app/build-resource/wallet/.env'});
 const dbConnect = require('./services/database-services');
 const oracledb = require('oracledb');
 

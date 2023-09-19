@@ -1,7 +1,7 @@
 import React, { useEffect, useState, Component } from 'react';
 import './App.css';
-import './grant-query';
-import { Grant } from './grant-query';
+import './frontend/grant-query';
+import { Grant } from './frontend/grant-query';
 
 class App extends Component {
   constructor(props) {
@@ -83,4 +83,3 @@ class App extends Component {
 }
 
 export default App;
-
