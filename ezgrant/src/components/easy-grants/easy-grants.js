@@ -11,25 +11,10 @@ class EasyGrants extends Component {
         responseToPost: [],
      }
     }
-  
-    componentDidMount() {
-
-      this.callApi()
-      .then(res => this.setState({ response: res.express}))
-      .catch(err => console.log(err));
-    }
-
-    callApi = async () => {
-      const response = await fetch('/api/hello');
-      const body = await response.text();
-      if (response.status !== 200) throw Error(body.message);
-      
-      return JSON.stringify(body);
-    };
     
     handleSubmit = async e => {
       e.preventDefault();
-      const response = await fetch('/api/world', {
+      const response = await fetch('/api/database', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
