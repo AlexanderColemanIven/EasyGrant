@@ -1,0 +1,22 @@
+.EasyGrants {
+    text-align: center;
+  }
+  
+  .App-header {
+      min-height: 50%;
+      padding-bottom: 10px;
+    }
+  
+  .server-response {
+    min-height: 50%;
+    padding-bottom: 10px;
+    padding-left: 20px;
+  }
+  
+  .title {
+    padding-left: 20px;
+    font-family: 'Ubuntu';
+    color: rgb(47, 0, 167);
+    font-size: 40px;
+  }
+  
