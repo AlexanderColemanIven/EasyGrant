@@ -1,8 +1,8 @@
 import React, { useEffect, useState, Component } from 'react';
-import './App.css'
-import Grant from './components/grant-query';
+import './easy-grants.css'
+import Grant from '../grant-query';
 
-class App extends Component {
+class EasyGrants extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -81,4 +81,4 @@ class App extends Component {
     }
 }
 
-export default App;
+export default EasyGrants;

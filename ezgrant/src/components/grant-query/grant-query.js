@@ -1,6 +1,5 @@
 import React from "react";
-import "./App.css";
-
+import './grant-query.css'
 export const Grant = (props) => {
     return (
         <>
