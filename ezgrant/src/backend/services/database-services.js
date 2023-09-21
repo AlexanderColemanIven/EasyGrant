@@ -1,5 +1,6 @@
 Error.stackTraceLimit = 50;
-require('dotenv').config({path : '../../../app/build-resource/wallet/.env'});
+const path = require('path')
+require('dotenv').config({path : path.resolve(__dirname, '../../../build-resource/wallet/.env')});
 const oracledb = require('oracledb');
 const dbConfig = require('dbconfig');
 
