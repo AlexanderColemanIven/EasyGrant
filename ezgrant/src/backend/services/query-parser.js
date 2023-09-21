@@ -3,8 +3,10 @@ const oracledb = require('oracledb');
 function generate_query(){
     const columnsToCheck = ['name', 'location', 'about', 'eligibility'];
 
-    const sqlConditions = columnsToCheck.map(column => {
-        return `UPPER(${column}) LIKE '%' || :keywords || '%'`;
+    const sqlConditions = userQueryTerms.map(term => {
+        return columnsToCheck.map(column => {
+          return `UPPER(${column}) LIKE '%' || '${term}' || '%'`;
+        }).join(' OR ');
       });
     
     const sqlStatement = `
