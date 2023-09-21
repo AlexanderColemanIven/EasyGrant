@@ -3,7 +3,7 @@
 
 ### Running the app
 The `PATH` variables are all now setup for the Docker App, if you want to
-run this code locally you must change the paths found in `test-connect.js`, `sqlnet.ora`, and
+run this code locally you must change the path found in `sqlnet.ora`, and
 set your `TNS_ADMIN` env variable if using custom paths. 
  ## How to run the code with Docker:
 1) Copy the `dev` script in `package.json` to the `start` script
