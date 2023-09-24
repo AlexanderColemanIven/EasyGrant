@@ -1,6 +1,7 @@
 import React, { useEffect, useState, Component } from 'react';
 import './easy-grants.css'
 import Grant from '../grant-query';
+import { Input } from 'antd';
 
 class EasyGrants extends Component {
   constructor(props) {
@@ -40,7 +41,7 @@ class EasyGrants extends Component {
       return (
       <div>
         <header class="title">
-          EasyGrant$
+          EasyGrants
         </header>
         <div class="server-response">
           <p>{response}</p>
@@ -48,10 +49,14 @@ class EasyGrants extends Component {
           <p>
             <strong>Post to Server:</strong>
           </p>
-          <input
-            type="text"
+          <Input.Search
+            placeholders="input search text"
+            enterButton="submit"
+            size="large"
             value={post}
-            onChange={e => this.setState({ post: e.target.value })}
+            type="text"
+            onChange={e => this.setState({ post: e.target.value})}
+            onSearch={this.handleSubmit}
           />
           <button type="submit">Submit</button>
           

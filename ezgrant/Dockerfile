@@ -1,7 +1,7 @@
 FROM oraclelinux:7-slim
-
+# Adding Oracle Instant clien t
 ADD linux-binaries/oracle-instantclient*.rpm /tmp/
-
+# Oracle and Node.js setup
 RUN yum -y install oracle-release-el7 oracle-nodejs-release-el7 && \
     yum-config-manager --disable ol7_developer_EPEL
 
@@ -11,17 +11,32 @@ RUN  yum -y install /tmp/oracle-instantclient*.rpm nodejs && \
      echo /usr/lib/oracle/12.2/client64/lib > /etc/ld.so.conf.d/oracle-instantclient12.2.conf && \
      ldconfig
 
+# Set Oracle Instant Client Path 
 ENV PATH=$PATH:/usr/lib/oracle/12.2/client64/bin
 
+
+# Installing procps (for ps command)
+RUN yum install -y procps
+
+# Set the working directory 
 WORKDIR /app
-ADD . /app/
+# Copy package.json to leverage Docker cache
+COPY package.json /app
+
+# Install nodemon and concurrently globally
+RUN npm install -g nodemon concurrently 
+
+# Install dependencies
+RUN npm install
+
+# Copy all files
+COPY . /app/
 
 # move wallet credentials to default dir for Oracle
 COPY build-resource/wallet/* /usr/lib/oracle/19.3/client64/lib/network/admin/
 ENV TNS_ADMIN=/usr/lib/oracle/19.3/client64/lib/network/admin/
-COPY package.json /app
+
 EXPOSE 8080
 EXPOSE 4000
-RUN npm install
 
-ENTRYPOINT [ "npm", "start"]
+ENTRYPOINT ["nodemon", "--exec", "npm", "start"]
