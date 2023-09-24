@@ -40,15 +40,6 @@ set your `TNS_ADMIN` env variable if using custom paths.
     ```
     SSL_SERVER_DN_MATCH=yes
     ```
-2) Find `src/services/database-services.js`
-  - Change
-    ```
-    require('dotenv').config({path : '../../app/build-resource/wallet/.env'});
-    ```
-    to:
-    ```
-    require('dotenv').config({path : '../../ezgrant/build-resource/wallet/.env'});
-    ```
 3) Download the Oracle Instant Client Library for your OS here: [https://www.oracle.com/cis/database/technologies/instant-client/downloads.html](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
   - MacOS: Place the UNZIPPED file into your `Downloads` folder (expects: `/Downloads/instantclient_19_8`)
     - Rosetta is required to run Intel x86 Oracle Instant Client library
