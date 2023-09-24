@@ -30,7 +30,7 @@ RUN npm install -g nodemon concurrently
 RUN npm install
 
 # Copy all files
-COPY . /app/
+ADD . /app/
 
 # move wallet credentials to default dir for Oracle
 COPY build-resource/wallet/* /usr/lib/oracle/19.3/client64/lib/network/admin/
