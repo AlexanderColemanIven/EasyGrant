@@ -14,12 +14,8 @@ set your `TNS_ADMIN` env variable if using custom paths.
    ```
 5) Run
    ```
-   docker run -p 8080:8080 -v $(pwd):/app -v /app/node_modules -ti ezgrants
-   ```
-   or
-   ```
    docker run -p 8080:8080 -v $(pwd):/app -v /app/node_modules -ti --rm ezgrants
-   ```
+```
    (saves space on your computer)
    
 ## How to run the React/Database code *Locally*:
@@ -70,7 +66,7 @@ set your `TNS_ADMIN` env variable if using custom paths.
 
 ## Pushing Code Changes
 1) `git checkout -b [branch_name]`, the branch_name should be descriptive of the change being made
-2) `git add -`, `git commit -m "[descriptive commit message]`
+2) `git add .`, `git commit -m "[descriptive commit message]`
 3) `git push --set-upstream origin [branch_name]`
 4) Now go to the GitHub repo and you should see this <img width="923" alt="pullrequest" src="https://github.com/ColeHausman/EasyGrant/assets/55408275/db81082b-ee2c-4fc2-a738-6f723579f497">
 5) Click "Compare & Pull Request", this will take you to a PR template I made, fill out the information that is applicable \
