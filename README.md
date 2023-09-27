@@ -14,11 +14,11 @@ set your `TNS_ADMIN` env variable if using custom paths.
    ```
 5) Run
    ```
-   docker run -p 8080:8080 -v $(pwd):/app -v /app/node_modules -ti ezgrants
+   docker run -p 8080:8080 -v $(pwd):/app -ti ezgrants
    ```
    or
    ```
-   docker run -p 8080:8080 -v $(pwd):/app -v /app/node_modules -ti --rm ezgrants
+   docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants
    ```
    (saves space on your computer)
    
