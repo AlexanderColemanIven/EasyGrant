@@ -1,4 +1,6 @@
 const oracledb = require('oracledb');
+const SCHEMA = "ADMIN"
+const TABLE = "GRANTS"
 
 function generate_query(){
     const columnsToCheck = ['name', 'location', 'about', 'eligibility'];
@@ -9,7 +11,7 @@ function generate_query(){
     
     const sqlStatement = `
       SELECT *
-      FROM GRANTS
+      FROM ${SCHEMA}.${TABLE}
       WHERE ${sqlConditions.join(' OR ')}
     `;
 
