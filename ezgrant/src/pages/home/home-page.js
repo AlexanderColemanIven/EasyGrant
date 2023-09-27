@@ -1,8 +1,8 @@
 import React, { useEffect, useState, Component } from 'react';
-import './easy-grants.css'
-import Grant from '../grant-query';
+import './home-page.css'
+import Grant from '../../components/grant-query';
 
-class EasyGrants extends Component {
+class HomePage extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -39,10 +39,10 @@ class EasyGrants extends Component {
       console.log(responseToPost);
       return (
       <div>
-        <header class="title">
+        <header class="home-page-title">
           EasyGrant$
         </header>
-        <div class="server-response">
+        <div class="home-page-server-response">
           <p>{response}</p>
         <form onSubmit={this.handleSubmit}>
           <p>
@@ -50,6 +50,7 @@ class EasyGrants extends Component {
           </p>
           <input
             type="text"
+            name="home-page-search"
             value={post}
             onChange={e => this.setState({ post: e.target.value })}
           />
@@ -66,4 +67,4 @@ class EasyGrants extends Component {
     }
 }
 
-export default EasyGrants;
+export default HomePage;
