@@ -48,3 +48,28 @@ app.post('/api/login', async (req, res) => {
     res.send({express: attempt_results});
   });
 });
+
+
+process.on('SIGINT', gracefulShutdown)
+process.on('SIGTERM', gracefulShutdown)
+
+function gracefulShutdown (signal) {
+  if (signal) console.log(`\nReceived signal ${signal}`);
+  console.log('Closing http server');
+
+  try {
+    server.close(function (err) {
+      if (err) {
+        console.error('There was an error', err.message)
+        process.exit(1)
+      } else {
+        console.log('http server closed successfully. Exiting!')
+        process.exit(0)
+      }
+    })
+  } catch (err) {
+    console.error('There was an error', err.message)
+    setTimeout(() => process.exit(1), 500)
+  }
+
+}
