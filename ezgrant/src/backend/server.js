@@ -30,7 +30,7 @@ bcrypt.hash(process.env.AUTH_PASSWORD, SALT_ROUNDS, function(err, hash) {
 });
 
 app.post('/api/database', async (req, res) => {
-  let sql = qp.generate_query();
+  let sql = qp.generate_query(req.body.post);
   let binds = qp.get_binds(req.body.post);
   const options = { outFormat: null };
 
