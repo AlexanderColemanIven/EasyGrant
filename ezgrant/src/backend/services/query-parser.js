@@ -6,7 +6,11 @@ const TABLE = "GRANTS"
 
 function parse_input(user_input){
   if(user_input){
-    let phrases = user_input.trim().toUpperCase().replace(/\bAND\b/g, '').match(/\w+|"[^"]+"/g), i = phrases.length;
+    let phrases = user_input
+    .trim()
+    .toUpperCase()
+    .replace(/\bAND\b/g, '')
+    .match(/[\w-]+|"[^"]+"/g), i = phrases.length;
     while(i--){
       phrases[i] = phrases[i].replace(/"/g,"").trim();
     }
@@ -20,8 +24,12 @@ function parse_input(user_input){
 function get_binds(user_query){
     phrases = parse_input(user_query);
     const bind_array = phrases.map((value, idx) => {
+      if(value.charAt(0) === '-'){
+        value = value.substring(1);
+      }
       let bind = {}
-      bind[`keyword${idx}`] = { dir: oracledb.BIND_IN, val: `%${value}%`, type: oracledb.STRING }
+      bind[`keyword${idx}`] 
+      = { dir: oracledb.BIND_IN, val: `%${value}%`, type: oracledb.STRING }
       return bind;
     });
     const binds = bind_array.reduce((accumulator, currentObject) => {
@@ -39,7 +47,9 @@ module.exports.get_binds = get_binds;
 
 const conditional_and = () => { return ` AND `; }
 const conditional_or = () => { return ` OR `; }
+const variable_delimeter = (conditional) => { return ')' + conditional + '(' }
 const inflectional = (column, value) => { return `UPPER(${column}) LIKE :keyword${value}` }
+const negate_inflectional = (column, value) => { return `UPPER(${column}) NOT LIKE :keyword${value}` }
 
 
 function generate_query(user_query){
@@ -50,16 +60,20 @@ function generate_query(user_query){
     return `SELECT 1 FROM DUAL WHERE 1 = 0`; // do nothing
   }
   const sqlConditions = phrases.map((keyword, idx) => {
-    const delimeter = idx === 0 ? `(` : keyword === "OR" 
-    ? `)` + conditional_or() + '(' 
-    : `)` + conditional_and() + '('
+    const delimeter = idx === 0 ? `(` : keyword === "OR"
+    ? variable_delimeter(conditional_or())
+    : variable_delimeter(conditional_and());
+    if(keyword.charAt(0) === '-'){ // handle exclusion
+      return delimeter + columnsToCheck.map(column => {
+        return negate_inflectional(column, idx);
+      }).join(conditional_and());
+    }
     return delimeter + columnsToCheck.map(column => {
       return inflectional(column, idx);
     }).join(conditional_or());
-  }).join('').trim() + ')';
+  }).join('') + ')';
   
   const sqlStatement = `SELECT * FROM ${SCHEMA}.${TABLE} WHERE ${sqlConditions}`;
-  console.log(sqlStatement);
   return sqlStatement;
 }
 
