@@ -1,4 +1,82 @@
-.grant-container{
-    padding-left: 10px;
-    color: aqua
+/* Additional styles for Card component */
+
+/* Center-aligns and sets the font size for the title in the card header */
+.ant-card-head {
+  text-align: center;
+  font-size: 5rem;
+}
+
+/* Sets the font size for the body content of the card */
+.ant-card-body {
+  font-size: 2rem;
+}
+
+/* Styles for the grant container when it is not expanded */
+.grant-container {
+  padding-left: 10px; /* Adds padding on the left */
+  color: aqua; /* Sets text color */
+  transition: all 0.3s ease; /* Animates any changes */
+  overflow-y: auto; /* Enables vertical scrolling */
+  max-height: 300px; /* Sets maximum height */
+}
+
+/* Styles for the card title when the card is expanded */
+.expanded-card .ant-card-head-title {
+  text-align: center;
+}
+
+/* Font size adjustments for fields and action links when card is expanded */
+.expanded-card .grant-field,
+.expanded-card .grant-action-links {
+  font-size: larger;
+}
+
+/* Styles for the grant container when it is expanded */
+.grant-container.expanded {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 9999; /* Ensures the expanded card is above all other content */
+  max-height: 100vh; /* Sets maximum height to full viewport height */
+}
+
+/* Font size for card body when not expanded */
+.grant-container .ant-card-body {
+  font-size: 1rem;
+}
+
+/* Font size for card body when expanded */
+.grant-container.expanded .ant-card-body {
+  font-size: 1.5rem;
+}
+
+/* Styles for the card title */
+.ant-card .ant-card-head-title {
+  text-align: center;
+  font-size: 1.5rem !important; /* Overrides any other font size settings */
+}
+
+/* Makes the field name bold */
+.grant-field-name {
+  font-weight: bold;
+}
+
+/* Adds margin to action links */
+.grant-action-links {
+  margin-top: 10px;
+}
+
+/* Styles for the "Apply" and "Learn More" links */
+.grant-apply-link,
+.grant-learn-more-link {
+  margin-right: 15px; /* Adds margin to the right */
+  font-weight: bold; /* Makes text bold */
+}
+
+/* Adds margin to the right of the field icon */
+.grant-field-icon {
+  margin-right: 5px;
 }
