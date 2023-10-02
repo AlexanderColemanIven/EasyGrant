@@ -56,6 +56,14 @@ export const Grant = (props) => {
                     let icon;  // Initialize icon variable
                     // Map object keys to specific icons
                     if (object_key === "NAME") icon = <IdcardOutlined />;
+                    if (object_key === "LOCATION") icon = <EnvironmentOutlined />;
+                    if (object_key === "AMOUNT") icon = <DollarCircleOutlined />;
+                    if (object_key === "DEADLINE") icon = <CalendarOutlined />;
+                    if (object_key === "CATEGORY") icon = <TagsOutlined />;
+                    if (object_key === "SPONSOR") icon = <UserOutlined />;
+                    if (object_key === "LINK") icon = <LinkOutlined />;
+                    if (object_key === "ABOUT") icon = <InfoCircleOutlined />;
+                    if (object_key === "ELIGIBILITY") icon = <CheckCircleOutlined />;
                     // ... (other icons mappings)
                     // Generate the field display
                     return (

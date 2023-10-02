@@ -18,6 +18,8 @@
   transition: all 0.3s ease; /* Animates any changes */
   overflow-y: auto; /* Enables vertical scrolling */
   max-height: 300px; /* Sets maximum height */
+  margin-top: 16px; /* Adds margin to the top */
+  margin-bottom: 16px; /* Adds margin to the bottom */
 }
 
 /* Styles for the card title when the card is expanded */
