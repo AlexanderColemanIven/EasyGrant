@@ -39,7 +39,7 @@ export const Grant = (props) => {
                     }
                 }}
                 // Card title
-                title={props.grantName || "No Grant Name Available"}
+                title={props.grant.NAME }
                 // Add class for styling if card is expanded
                 className={isExpanded ? "expanded-card" : ""}
                 // Extra contains the collapse/expand toggle
