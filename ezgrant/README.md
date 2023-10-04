@@ -64,6 +64,11 @@ set your `TNS_ADMIN` env variable if using custom paths.
   - You can and SHOULD delete containers after running the code as you have to build each time you make a change (not needed if using `--rm` flag in your run command)
 - You may need to run `npm i docker` if on Macos
 
+### Expanding and Collapsing Grant Details
+
+- **To Expand**: Simply click anywhere within a Grant card to view more detailed information.
+- **To Collapse**: Click again within the expanded Grant card or click outside of it to revert to the summary view.
+
 ## Pushing Code Changes
 1) `git checkout -b [branch_name]`, the branch_name should be descriptive of the change being made
 2) `git add .`, `git commit -m "[descriptive commit message]`

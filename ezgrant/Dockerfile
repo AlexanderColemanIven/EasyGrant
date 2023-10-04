@@ -21,7 +21,8 @@ RUN yum install -y procps
 # Set the working directory 
 WORKDIR /app
 # Copy package.json to leverage Docker cache
-COPY package.json /app
+COPY package.json package.json
+COPY package-lock.json package-lock.json
 
 # Install nodemon and concurrently globally
 RUN npm install -g nodemon concurrently 
