@@ -84,11 +84,12 @@ class HomePage extends Component {
             </div>
           </form>
         </div>
+        {responseToPost.length > 0 && 
         <div className="display-box">
           {responseToPost.map((obj) => {
             return <Grant grant={obj}></Grant>;
           })}
-        </div>
+        </div>}
       </div>
       )
     }
