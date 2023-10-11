@@ -9,13 +9,9 @@ set your `TNS_ADMIN` env variable if using custom paths.
 1) Copy the `dev` script in `package.json` to the `start` script
 2) `cd` into the `ezgrant` directory
 3) Build using:
-   ```
-   docker buildx build --platform linux/amd64 --pull -t ezgrants .
-   ```
+   ```docker buildx build --platform linux/amd64 --pull -t ezgrants . ```
 5) Run
-   ```
-   docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants
-```
+   ```docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants ```
    (saves space on your computer)
    
 ## How to run the React/Database code *Locally*:
@@ -63,12 +59,6 @@ set your `TNS_ADMIN` env variable if using custom paths.
   - Unless you run the code locally (which you might want to setup)
   - You can and SHOULD delete containers after running the code as you have to build each time you make a change (not needed if using `--rm` flag in your run command)
 - You may need to run `npm i docker` if on Macos
-
-### Expanding and Collapsing Grant Details
-
-- **To Expand**: Simply click anywhere within a Grant card to view more detailed information.
-- **To Collapse**: Click again within the expanded Grant card or click outside of it to revert to the summary view.
-
 ## Pushing Code Changes
 1) `git checkout -b [branch_name]`, the branch_name should be descriptive of the change being made
 2) `git add .`, `git commit -m "[descriptive commit message]`
