@@ -9,17 +9,9 @@ set your `TNS_ADMIN` env variable if using custom paths.
 1) Copy the `dev` script in `package.json` to the `start` script
 2) `cd` into the `ezgrant` directory
 3) Build using:
-   ```
-   docker buildx build --platform linux/amd64 --pull -t ezgrants .
-   ```
+   ```docker buildx build --platform linux/amd64 --pull -t ezgrants . ```
 5) Run
-   ```
-   docker run -p 8080:8080 -v $(pwd):/app -ti ezgrants
-   ```
-   or
-   ```
-   docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants
-   ```
+   ```docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants ```
    (saves space on your computer)
    
 ## How to run the React/Database code *Locally*:
@@ -40,6 +32,15 @@ set your `TNS_ADMIN` env variable if using custom paths.
     ```
     SSL_SERVER_DN_MATCH=yes
     ```
+2) Find `src/services/database-services.js`
+  - Change
+    ```
+    require('dotenv').config({path : '../../app/build-resource/wallet/.env'});
+    ```
+    to:
+    ```
+    require('dotenv').config({path : '../../ezgrant/build-resource/wallet/.env'});
+    ```
 3) Download the Oracle Instant Client Library for your OS here: [https://www.oracle.com/cis/database/technologies/instant-client/downloads.html](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
   - MacOS: Place the UNZIPPED file into your `Downloads` folder (expects: `/Downloads/instantclient_19_8`)
     - Rosetta is required to run Intel x86 Oracle Instant Client library
@@ -58,10 +59,9 @@ set your `TNS_ADMIN` env variable if using custom paths.
   - Unless you run the code locally (which you might want to setup)
   - You can and SHOULD delete containers after running the code as you have to build each time you make a change (not needed if using `--rm` flag in your run command)
 - You may need to run `npm i docker` if on Macos
-
 ## Pushing Code Changes
 1) `git checkout -b [branch_name]`, the branch_name should be descriptive of the change being made
-2) `git add -`, `git commit -m "[descriptive commit message]`
+2) `git add .`, `git commit -m "[descriptive commit message]`
 3) `git push --set-upstream origin [branch_name]`
 4) Now go to the GitHub repo and you should see this <img width="923" alt="pullrequest" src="https://github.com/ColeHausman/EasyGrant/assets/55408275/db81082b-ee2c-4fc2-a738-6f723579f497">
 5) Click "Compare & Pull Request", this will take you to a PR template I made, fill out the information that is applicable \
