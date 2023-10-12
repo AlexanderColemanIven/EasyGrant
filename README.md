@@ -9,9 +9,13 @@ set your `TNS_ADMIN` env variable if using custom paths.
 1) Copy the `dev` script in `package.json` to the `start` script
 2) `cd` into the `ezgrant` directory
 3) Build using:
-   ```docker buildx build --platform linux/amd64 --pull -t ezgrants . ```
+   ```
+   docker buildx build --platform linux/amd64 --pull -t ezgrants .
+   ```
 5) Run
-   ```docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants ```
+   ```
+   docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants
+    ```
    (saves space on your computer)
    
 ## How to run the React/Database code *Locally*:
