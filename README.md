@@ -1,6 +1,12 @@
 # Senior Design Project
 ## EasyGrant
 
+### Running the web scraper
+In directory `ezgrant` run:
+```
+node db-updater/src/web-scraping-test.js
+```  
+
 ### Running the app
 The `PATH` variables are all now setup for the Docker App, if you want to
 run this code locally you must change the path found in `sqlnet.ora`, and
