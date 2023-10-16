@@ -4,6 +4,10 @@
 ### Running the web scraper
 In directory `ezgrant` run:
 ```
+npm i
+```
+
+```
 node db-updater/src/web-scraping-test.js
 ```  
 
