@@ -2,6 +2,51 @@ const websiteList = require('../resources/website-list');
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const ora = require('ora');
+const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
+const os = require('os');
+const Listr = require('listr');
+
+
+async function findNumPages(){
+    const spinner = ora('Finding last page...').start();
+    spinner.color = 'red';
+    delay(1000);
+    const browser = await puppeteer.launch({
+        headless: "new",
+        args: ['--no-sandbox'],
+    });
+
+    let i = 0;
+    let foundEnd = false;
+
+    try{
+        const page = await browser.newPage();
+        while(!foundEnd){
+            spinner.text = `checking page ${i}...`
+            await page.goto(websiteList[1]+`?page=${i}`).then(async () => {
+                const noResidenciesMessage = await page.evaluate(() => {
+                    const messageElement = document.querySelector('.view-empty');
+                    if (messageElement) {
+                      return messageElement.textContent;
+                    }
+                    return null;
+                });
+                if (noResidenciesMessage && noResidenciesMessage.includes("No residencies match your criteria.")) {
+                    foundEnd = true;
+                }
+             });
+             i++;
+        }
+    }catch(e){
+        console.log(e);
+    } finally {
+        spinner.color = 'green';
+        spinner.succeed(`Final page found at page ${i-1}`);
+        delay(1000);
+        await browser.close();
+    }
+    return i-1;
+}
 
 
 async function scrapeArtistCommunities(pageNumber){
@@ -123,46 +168,55 @@ async function scrapeArtistCommunities(pageNumber){
     return grants;
 }
 
-const startScraping = async () => {
-    const spinner = ora('Scraping in progress...').start();
-    spinner.color = 'blue';
-    let pageNumber = 0;
-    let noResidenciesFound = false;
-    let allGrants = [];
-    await delay(1000);
-    while (!noResidenciesFound) {
-        spinner.color = 'yellow';
-	    spinner.text = `searching page ${pageNumber}...`;
-      try {
-        const grants = await scrapeArtistCommunities(pageNumber);
-        if (grants.length === 0) {
-          noResidenciesFound = true;
-          spinner.succeed('Scraping completed. No residencies found.');
-        } else {
-            spinner.color = 'green';
-            spinner.text = 'removing cat videos...'
-            await delay(1000);
-          allGrants = allGrants.concat(grants);
-          pageNumber++;
-        }
-      } catch (error) {
-        if (error.message === "No residencies found for this page.") {
-          noResidenciesFound = true;
-          spinner.succeed('Scraping completed. No residencies found.');
-        } else {
-          spinner.fail('Error while scraping.');
-          console.error("Error while scraping:", error);
-        }
-      }
-    }
-    spinner.color = 'green';
-    spinner.text = 'finishing...'
-    delay(1000);
-    spinner.succeed("Scraping completed.")
-    console.log("All scraped grants:", allGrants);
-};
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 
-startScraping();
+async function scrapeInParallel() {
+    const numWorkers = os.cpus().length;
+    console.log('\x1b[36m', `initializing ${numWorkers} threads...`)
+    const totalPages = await findNumPages();
+
+    if (isMainThread) {
+        const tasks = [];
+        const combinedResults = [];
+        
+        for (let i = 0; i < numWorkers; i++) {
+            const startPage = i * (totalPages / numWorkers);
+            const endPage = (i + 1) * (totalPages / numWorkers);
+            tasks.push({
+                title: `Worker ${i + 1} scraping pages ${Math.floor(startPage)}-${Math.floor(endPage)}`,
+                task: () => runWorker(startPage, endPage, combinedResults),
+            });
+        }
+        const listr = new Listr(tasks, { concurrent: true });
+        await listr.run();
+        const spinner = ora('Finishing...').start();
+        spinner.color = 'yellow';
+        delay(1000);
+        if(combinedResults.flat().flat().length > 0){
+            spinner.succeed(`Grants collected: ${combinedResults.flat().flat().length}`);
+            delay(1000);
+        }else{
+            spinner.fail('Error while scraping');
+            delay(1000);
+        }
+
+        const flattenedResults = combinedResults.flat();
+        return flattenedResults.flat();
+    }
+  }
+  
+  async function runWorker(startPage, endPage, combinedResults) {
+    return new Promise(async (resolve) => {
+    const workerResults = [];
+    for (let pageNumber = startPage; pageNumber < endPage; pageNumber++) {
+        const result = await scrapeArtistCommunities(pageNumber);
+        workerResults.push(result);
+    }
+    combinedResults.push(workerResults);
+    resolve(workerResults);
+    });
+  }
+  
+  scrapeInParallel();
