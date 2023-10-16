@@ -173,6 +173,7 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 
 
 async function scrapeInParallel() {
+    const startPerformance = performance.now();
     const numWorkers = os.cpus().length;
     console.log('\x1b[36m', `initializing ${numWorkers} threads...`)
     const totalPages = await findNumPages();
@@ -182,20 +183,24 @@ async function scrapeInParallel() {
         const combinedResults = [];
         
         for (let i = 0; i < numWorkers; i++) {
-            const startPage = i * (totalPages / numWorkers);
-            const endPage = (i + 1) * (totalPages / numWorkers);
+            const startPage = Math.floor(i * (totalPages / numWorkers));
+            const endPage = i < numWorkers ? Math.floor((i + 1) * (totalPages / numWorkers)) : totalPages;
             tasks.push({
-                title: `Worker ${i + 1} scraping pages ${Math.floor(startPage)}-${Math.floor(endPage)}`,
+                title: `Worker ${i + 1} scraping pages ${startPage}-${endPage}`,
                 task: () => runWorker(startPage, endPage, combinedResults),
             });
         }
         const listr = new Listr(tasks, { concurrent: true });
         await listr.run();
+        const endPerformance = performance.now();
+        const executionTime = endPerformance - startPerformance;
+        const seconds = Math.floor(executionTime / 1000);
+        const milliseconds = executionTime % 1000;
         const spinner = ora('Finishing...').start();
         spinner.color = 'yellow';
         delay(1000);
         if(combinedResults.flat().flat().length > 0){
-            spinner.succeed(`Grants collected: ${combinedResults.flat().flat().length}`);
+            spinner.succeed(`Grants collected: ${combinedResults.flat().flat().length} in ${seconds}:${milliseconds} seconds`);
             delay(1000);
         }else{
             spinner.fail('Error while scraping');
@@ -218,5 +223,6 @@ async function scrapeInParallel() {
     resolve(workerResults);
     });
   }
+
   
   scrapeInParallel();
