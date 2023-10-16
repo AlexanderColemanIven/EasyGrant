@@ -184,9 +184,13 @@ async function scrapeInParallel() {
         
         for (let i = 0; i < numWorkers; i++) {
             const startPage = Math.floor(i * (totalPages / numWorkers));
-            const endPage = i < numWorkers ? Math.floor((i + 1) * (totalPages / numWorkers)) : totalPages;
+            const endPage = Math.floor((i + 1) * (totalPages / numWorkers));
+            const adj = i + 1 < numWorkers ? 1 : 0;
+            const workMessage = endPage-startPage > 1 
+            ? `Worker ${i + 1} scraping pages ${startPage}-${endPage-adj}`
+            : `Worker ${i + 1} scraping page ${startPage}`;
             tasks.push({
-                title: `Worker ${i + 1} scraping pages ${startPage}-${endPage}`,
+                title: workMessage,
                 task: () => runWorker(startPage, endPage, combinedResults),
             });
         }
