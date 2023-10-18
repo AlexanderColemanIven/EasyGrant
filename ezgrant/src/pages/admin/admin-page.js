@@ -14,12 +14,16 @@ function AdminPage() {
     uname: "Invalid username",
     pass: "Invalid password"
   };
+  const [loggedInUser, setLoggedInUser] = useState("");
+  const logout = () => {
+    setIsSubmitted(false);
+  };
   const menu = (
     <Menu>
       <Menu.Item key="1">
         Settings
       </Menu.Item>
-      <Menu.Item key="2">
+      <Menu.Item key="2" onClick={logout}>
         Log Out
       </Menu.Item>
     </Menu>
@@ -43,6 +47,7 @@ function AdminPage() {
       if(body.express.match_username && body.express.match_password) {
         setIsSubmitted(true);
         setErrorMessages({});
+        setLoggedInUser(uname);
       } else {
         setErrorMessages({
           name: body.express.match_username ? "pass" : "uname",
@@ -55,17 +60,19 @@ function AdminPage() {
   };
 
   return (
+    
     <div className="admin-page">
+      <a href="http://localhost:8080/" className="home-button">Homepage</a> 
       {isSubmitted ? (
         <Layout style={{ minHeight: '100vh', minWidth: '100vw'}}>
           <Header className="admin-header">
-            <Button type="text" className="grant-button">View Grant Submissions</Button>
             <div className="admin-user-info">
               <Dropdown overlay={menu}>
                 <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-                  Emily Martin <UserOutlined />
+                  {loggedInUser} <UserOutlined />
                 </a>
               </Dropdown>
+              <Button type="link" style={{ color: '#1890ff' }} onClick={() => window.location.href="/"}>Home</Button>
             </div>
           </Header>
           <Content className="admin-content">

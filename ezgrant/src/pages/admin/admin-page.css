@@ -1,90 +1,97 @@
 .admin-page {
-    font-family: Oxygen, Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    height: 100vh;
-    background-color: #f8f9fd;
-  }
-  
-  input[name="uname"],
-  input[type="password"] {
-    height: 25px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-  }
-  
-  .admin-login-submit {
-    margin-top: 10px;
-    cursor: pointer;
-    font-size: 15px;
-    background: #01d28e;
-    border: 1px solid #01d28e;
-    color: #fff;
-    padding: 10px 20px;
-  }
-  
-  .admin-login-submit:hover {
-    background: #6cf0c2;
-  }
-  
-  .admin-signin-background {
-    background-color: #d5f9d5;
-    height: 100vh;  /* Full screen height */
-    width: 100vw;  /* Full screen width */
-  }
+  font-family: Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  height: 100vh;
+  background-color: #f8f9fd;
+}
 
-  .admin-header {
-    background-color: #d5f9d5;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    width: 100%;
-    height: 100%;
-    position: fixed;  /* Makes the header sticky */
-    z-index: 1;  /* Ensures the header is above other elements */
-  }
-  
-  .admin-content {
-    margin-top: 64px;  /* Adjusts for the fixed header */
-  }
+input[name="uname"],
+input[type="password"] {
+  height: 25px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
 
-  .button-container {
-    display: flex;
-    justify-content: center;
-  }
-  
-  .grant-button {
-    margin-top: 15px; /* Adjust this value as needed to match other buttons*/
-  }
+.admin-login-submit {
+  margin-top: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  background: #01d28e;
+  border: 1px solid #01d28e;
+  color: #fff;
+  padding: 10px 20px;
+}
 
-  .admin-login-form {
-    background-color: white;
-    padding: 2rem;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  }
-  
+.admin-login-submit:hover {
+  background: #6cf0c2;
+}
 
-  .admin-user-info {
-    margin-left: auto;
-  }
-  
-  .list-container {
-    display: flex;
-  }
-  
-  .error {
-    color: red;
-    font-size: 12px;
-  }
-  
-  .admin-page-title {
-    font-size: 25px;
-    margin-bottom: 20px;
-  }
-  
-  .input-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin: 10px;
-  }
+.button-container {
+  display: flex;
+  justify-content: center;
+}
+
+.admin-signin-container {
+  background-color: #d5f9d5; /* changed color */
+  padding: 2rem;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  max-width: 400px;
+  border-radius: 10px;
+}
+
+.admin-header {
+  background-color: #d5f9d5;
+  display: flex;
+  justify-content: flex-end;
+  align-items: right;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  z-index: 1;
+}
+
+.admin-user-info {
+  display: flex-end;
+  gap: 10px;  /* This will add a small gap between the user dropdown and the home button */
+}
+
+.admin-content {
+  margin-top: 64px;
+  padding: 20px;
+}
+
+.list-container {
+  display: flex;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
+}
+
+.admin-page-title {
+  font-size: 25px;
+  margin-bottom: 20px;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px;
+}
+
+/* Style for the Home button on the admin page */
+.ant-btn-link {
+  margin-right: 20px;
+  color: #333;
+  font-size: 16px;
+  transition: color 0.3s;
+}
+
+.ant-btn-link:hover {
+  color: #006aff;
+}
