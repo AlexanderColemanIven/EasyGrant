@@ -13,7 +13,7 @@ const port = process.env.PORT || 4000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.listen(port, async () => {
+const server = app.listen(port, async () => {
   await dbConnect.close();  // avoid any pool cache issues
   console.log(`Listening on port ${port}`)
   await dbConnect.initialize();
@@ -30,11 +30,11 @@ bcrypt.hash(process.env.AUTH_PASSWORD, SALT_ROUNDS, function(err, hash) {
 });
 
 app.post('/api/database', async (req, res) => {
-  let sql = qp.generate_query(req.body.post);
-  let binds = qp.get_binds(req.body.post);
+  const sql = qp.generate_query(req.body.post);
+  const binds = qp.get_binds(req.body.post);
   const options = { outFormat: null };
 
-  let retval = await dbConnect.simpleExecute(sql, binds, options);
+  const retval = await dbConnect.simpleExecute(sql, binds, options);
   console.log(retval);
   res.send({express: retval});
 });

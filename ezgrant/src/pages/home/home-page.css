@@ -48,11 +48,11 @@ body {
   margin: 20px 0;
 }
 
+
 /* Style for the Admin button on the homepage */
-button {
+.button {
   margin-right: 10px;
 }
-
 
 .button-group button {
   background-color: #006aff;
@@ -100,4 +100,3 @@ button {
   border-radius: 5px;
   margin: 10px;
   background-color: white;
-}
