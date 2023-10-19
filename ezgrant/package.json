@@ -87,6 +87,7 @@
   },
   "description": "My webpack project",
   "devDependencies": {
-    "react-error-overlay": "^6.0.9"
+    "react-error-overlay": "^6.0.9",
+    "terser-webpack-plugin": "^5.3.9"
   }
 }
