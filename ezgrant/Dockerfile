@@ -23,14 +23,14 @@ WORKDIR /app
 COPY package.json package.json
 COPY package-lock.json package-lock.json
 
-# Copy all files
-ADD . /app/
-
 # Install nodemon and concurrently globally
 RUN npm install -g nodemon concurrently 
 
 # Install dependencies
 RUN npm install
+
+# Copy all files
+ADD . /app/
 
 # move wallet credentials to default dir for Oracle
 COPY build-resource/wallet/* /usr/lib/oracle/19.3/client64/lib/network/admin/
