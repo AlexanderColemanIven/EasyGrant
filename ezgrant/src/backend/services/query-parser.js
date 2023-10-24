@@ -1,7 +1,8 @@
 const oracledb = require('oracledb');
 const natural = require('natural');
 const nlp = require('compromise');
-const adv_nlp = require('compromise/two');
+const datePlugin = require('compromise-dates');
+nlp.plugin(datePlugin)
 
 const {
   moreThanExpressions, 
@@ -42,16 +43,6 @@ async function extractFeatures(input) {
     leftoverMatchers: null,
   }
   let doc_query = nlp(input);
-
-  // Need #Preposition #Date -> Could be before or after
-  //Need #Adjective #Preposition #Date -> Due by October 30, Due in October 30
-  //Need #Conjuction #Date -> Before September
-  console.log(doc_query.match('#Adjective').text());
-  console.log(doc_query.match('#Verb').text());
-  console.log(doc_query.match('#Adverb').text());
-  console.log(doc_query.match('#Noun').text());
-  console.log(doc_query.match('#Preposition').text());
-  console.log(doc_query.match('#Conjunction').text());
 
   //Find all possible amount comparisons
   if(doc_query.has('not #Noun #Preposition #Value')){
@@ -131,16 +122,30 @@ async function extractFeatures(input) {
 
   doc_query = nlp(input);
   features.location = await doc_query.places().text(); // Find location
-  console.log(doc_query.text());
-  if(doc_query.has('BEFORE #Date')){
-    console.log("Got here");
-    features.deadline = ['<=', doc_query.match('#Date').text()];
+
+  if(doc_query.has('BEFORE #Date') || doc_query.has('BY #Date')){
+    const date = doc_query.dates().format('yyyy-mm-dd').text();
+    features.deadline = ['<=', date.split(' to ').length > 1 ? date.split(' to ')[1] : date];
   }
   else if(doc_query.has('AFTER #Date')){
-    features.deadline = ['>=', doc_query.match('#Date').text()];
+    const date = doc_query.dates().format('yyyy-mm-dd').text();
+    features.deadline = ['>=', date.split(' to ').length > 1 ? date.split(' to ')[1] : date];
+    
   }else if(doc_query.has('#Date')){
-    features.deadline = ['=', doc_query.match('#Date').text()]; // Find due date or date IG
+    const date = doc_query.dates().format('yyyy-mm-dd').text();
+    if(date.split(' to ').length > 1){
+      const originalDate = new Date( date.split(' to ')[1]);
+      originalDate.setFullYear(originalDate.getFullYear() - 1);
+      const decrementedDateString = originalDate.toISOString().split('T')[0];
+      const s_originalDate = new Date( date.split(' to ')[0]);
+      s_originalDate.setFullYear(originalDate.getFullYear() - 1);
+      const s_decrementedDateString = s_originalDate.toISOString().split('T')[0];
+      features.deadline = ['=', decrementedDateString, s_decrementedDateString];
+    }else{
+      features.deadline = ['=', date];
+    }
   }
+
   input = input.replace(features.location, "");
   input = input.replace(features.deadline, "");
   doc_query = nlp(input);
@@ -151,27 +156,6 @@ async function extractFeatures(input) {
   });
   features.leftoverMatchers = generateSubstrings(doc_query.text());
   return features;
-}
-
-
-function parse_input(user_input){
-  extractFeatures(user_input).then((retval) => {
-    console.log(retval);
-  })
-
-  if(user_input){
-    let phrases = user_input
-    .trim()
-    .toUpperCase()
-    .replace(/\bAND\b/g, '')
-    .match(/[\w-]+|"[^"]+"/g), i = phrases.length;
-    while(i--){
-      phrases[i] = phrases[i].replace(/"/g,"").trim();
-    }
-    return phrases;
-  } else {
-    return [];
-  }
 }
 
 module.exports.extractFeatures = extractFeatures;
@@ -205,7 +189,10 @@ function get_binds(features){
       binds.location = { dir: oracledb.BIND_IN, val: `%${features.location}%`, type: oracledb.STRING }
     }
     if(features.deadline){
-      binds.deadline = { dir: oracledb.BIND_IN, val: `%${features.deadline[1]}%`, type: oracledb.STRING }
+      binds.deadline = { dir: oracledb.BIND_IN, val: `${features.deadline[1]}`, type: oracledb.STRING }
+      if(features.deadline.length > 2){
+        binds.start_deadline = { dir: oracledb.BIND_IN, val: `${features.deadline[2]}`, type: oracledb.STRING }
+      }
     }
     return binds;
 }
@@ -218,6 +205,14 @@ const conditional_or = () => { return ` OR `; }
 const variable_delimeter = (conditional) => { return ')' + conditional + '(' }
 const inflectional = (column, value) => { return `UPPER(${column}) LIKE :keyword${value}` }
 const negate_inflectional = (column, value) => { return `UPPER(${column}) NOT LIKE :keyword${value}` }
+const convertSQLDate = () => { return `TO_DATE(
+  CASE
+    WHEN REGEXP_SUBSTR(UPPER(DEADLINE), 'JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER', 1, 1, 'i') IS NOT NULL
+  THEN TO_CHAR(CURRENT_DATE, 'YYYY') || ' ' || UPPER(DEADLINE) || ' 01'
+  ELSE NULL
+  END,
+  'YYYY MONTH DD'
+)`}
 
 
 function generate_query(features){
@@ -231,16 +226,16 @@ function generate_query(features){
   if (features.location){
     restrictives.push(`UPPER(LOCATION) LIKE :location`);
   }
+  
   if (features.deadline){
-    if (features.deadline[0] === '='){
-      restrictives.push(`UPPER(DEADLINE) LIKE :deadline`);
+    if(features.deadline.length > 2){
+      restrictives.push(`${convertSQLDate()} BETWEEN TO_DATE(:start_deadline, 'YYYY-MM-DD') AND TO_DATE(:deadline, 'YYYY-MM-DD')`)
     }else{
-      restrictives.push(`TO_DATE(UPPER(DEADLINE), 'YYYY-MM-DD') ${features.deadline[0]} TO_DATE(:deadline , 'YYYY-MM-DD')`);
+      restrictives.push(`${convertSQLDate()} ${features.deadline[0]} TO_DATE(:deadline, 'YYYY-MM-DD')`)
     }
-    
   }
+  
   const preQuery = restrictives.length > 0 ? restrictives.join(' AND ') : "";
-  console.log(preQuery);
 
   const columnsToCheck = ['name', 'about'];
   
@@ -259,6 +254,7 @@ function generate_query(features){
   }).join('') + ')' : '';
   if(preQuery && !sqlConditions){
     const sqlStatement = `SELECT * FROM ${SCHEMA}.${TABLE} WHERE ${preQuery}`;
+    console.log(sqlStatement);
     return sqlStatement;
   }
   if(!preQuery && sqlConditions){
