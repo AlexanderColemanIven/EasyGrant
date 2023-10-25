@@ -30,12 +30,12 @@ bcrypt.hash(process.env.AUTH_PASSWORD, SALT_ROUNDS, function(err, hash) {
 });
 
 app.post('/api/database', async (req, res) => {
-  const sql = qp.generate_query(req.body.post);
-  const binds = qp.get_binds(req.body.post);
+  const features = await qp.extractFeatures(req.body.post);
+  const sql = qp.generate_query(features);
+  const binds = qp.get_binds(features);
   const options = { outFormat: null };
-
   const retval = await dbConnect.simpleExecute(sql, binds, options);
-  console.log(retval);
+  //console.log(retval);
   res.send({express: retval});
 });
 
