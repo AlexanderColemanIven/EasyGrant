@@ -48,6 +48,12 @@ body {
   margin: 20px 0;
 }
 
+
+/* Style for the Admin button on the homepage */
+.button {
+  margin-right: 10px;
+}
+
 .button-group button {
   background-color: #006aff;
   color: white;

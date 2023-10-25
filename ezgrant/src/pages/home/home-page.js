@@ -45,6 +45,7 @@ class HomePage extends Component {
         <header className="home-page-title">
           <span>EasyGrants</span>
           <div className="header-buttons">
+            <button onClick={() => window.location.href="/admin"}>Admin</button>
             <button>Sign In</button>
             <button>Register</button>
             <button>About Us</button>
