@@ -30,7 +30,7 @@ export const Grant = (props) => {
 
     return (
         // Main container for the grant card
-        <div ref={grantRef} className={"grant-container" + (isExpanded ? " expanded" : "")}>
+        <div data-testid="grant-container" ref={grantRef} className={"grant-container" + (isExpanded ? " expanded" : "")}>
             <Card
                 // Handle card click to expand/collapse, avoid action if an anchor tag is clicked
                 onClick={(e) => {
