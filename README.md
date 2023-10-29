@@ -1,16 +1,6 @@
 # Senior Design Project
 ## EasyGrant
 
-### Running the web scraper
-In directory `ezgrant` run:
-```
-npm i
-```
-
-```
-node db-updater/src/web-scraping-test.js
-```  
-
 ### Running the app
 The `PATH` variables are all now setup for the Docker App, if you want to
 run this code locally you must change the path found in `sqlnet.ora`, and
@@ -27,6 +17,23 @@ set your `TNS_ADMIN` env variable if using custom paths.
    docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants
     ```
    (saves space on your computer)
+
+## Testing
+1) Make sure App is not running
+2) In `ezgrant` run:
+```
+npm run test
+```
+
+## Running the web scraper
+In directory `ezgrant` run:
+```
+npm i
+```
+
+```
+node db-updater/src/web-scraping-test.js
+```  
    
 ## How to run the React/Database code *Locally*:
 1) Find `build-resources/wallet/sqlnet.ora`
