@@ -4,11 +4,6 @@ import { act } from 'react-dom/test-utils';
 import '@testing-library/jest-dom'
 import Grant from '.';
 
-beforeAll(() => {
-  jest.useFakeTimers();
-});
-
-
 describe('Testing Grant Scorecard', () => {
   // Define mock grant data
   const grantData = [
