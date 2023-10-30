@@ -4,6 +4,10 @@ import { act } from 'react-dom/test-utils';
 import '@testing-library/jest-dom'
 import Grant from '.';
 
+beforeAll(() => {
+  jest.useFakeTimers();
+});
+
 
 describe('Testing Grant Scorecard', () => {
   // Define mock grant data
@@ -34,23 +38,41 @@ describe('Testing Grant Scorecard', () => {
   });
 
 
-  it('grant expansion functions correctly', async () => {
+  it('grant expansion functions correctly with button', async () => {
     // Render the Grant component with the mock data
     render(<Grant grant={grantData} />);
-
     const grantContainer = screen.getByTestId('grant-container');
-
+  
+    // Initial state: should not have 'expanded' class
+    expect(grantContainer).not.toHaveClass('expanded');
+    
+    // Click the Expand button
+    const expandLink = screen.getByText("Expand");
     act(() => {
-      // Simulate a click event on the component
-      grantContainer.click();
+      fireEvent.click(expandLink);
     });
+    await screen.findByTestId('grant-container', {}, { timeout: 2000 });
+    const expandedContent = screen.getByText("Collapse");
+    expect(expandedContent).toBeInTheDocument();
+  });
 
-    // check grant-container expanded
-    await waitFor(() => {
-      setTimeout(() => {
-        expect(grantContainer).toHaveClass('expanded');
-      }, 500); // class name wont update instantly
+
+  it('grant expansion functions correctly within click area', async () => {
+    // Render the Grant component with the mock data
+    render(<Grant grant={grantData} />);
+    const grantContainer = screen.getByTestId('grant-container');
+  
+    // Initial state: should not have 'expanded' class
+    expect(grantContainer).not.toHaveClass('expanded');
+
+    // Click somewhere on the Grant scorecard
+    const randomPoint = screen.getByText("AMOUNT");
+    act(() => {
+      fireEvent.click(randomPoint);
     });
+    await screen.findByTestId('grant-container', {}, { timeout: 2000 });
+    const expandedContent = screen.getByText("Collapse");
+    expect(expandedContent).toBeInTheDocument();
   });
 
 });
