@@ -1,7 +1,7 @@
 # Senior Design Project
 ## EasyGrant
 
-![tests](https://github.com/github/docs/actions/workflows/test_ezgrant.yml/badge.svg)
+![tests](https://github.com/ColeHausman/EasyGrant/.github/workflows/test_ezgrant.yml/badge.svg)
 
 ### Running the app
 The `PATH` variables are all now setup for the Docker App, if you want to
