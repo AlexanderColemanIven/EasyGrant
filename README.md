@@ -2,6 +2,8 @@
 ## EasyGrant
 
 ![tests](https://github.com/ColeHausman/EasyGrant/actions/workflows/test_ezgrant.yml/badge.svg?branch=main)
+![Static Badge](https://img.shields.io/badge/v16%3E%3D-Node?logoColor=%237CFC00&label=Node)
+![Static Badge](https://img.shields.io/badge/7--slim-Node?logoColor=%237CFC00&label=oraclelinux&labelColor=%235D3FD3)
 
 ### Running the app
 The `PATH` variables are all now setup for the Docker App, if you want to
