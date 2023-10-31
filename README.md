@@ -8,27 +8,24 @@ The `PATH` variables are all now setup for the Docker App, if you want to
 run this code locally you must change the path found in `sqlnet.ora`, and
 set your `TNS_ADMIN` env variable if using custom paths. 
  ## How to run the code with Docker:
-1) Copy the `dev` script in `package.json` to the `start` script
-2) `cd` into the `ezgrant` directory
-3) Build using:
+1) `cd` into the `ezgrant` directory
+2) Build using:
    ```
    docker buildx build --platform linux/amd64 --pull -t ezgrants .
    ```
-5) Run
+3) Run
    ```
    docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants
     ```
-   (saves space on your computer)
 
 ## Testing
-1) Make sure App is not running
-2) In `ezgrant` run:
+In directory `ezgrant`, with `node_modules` installed run:
 ```
 npm run test
 ```
 
 ## Running the web scraper
-In directory `ezgrant` run:
+In directory `ezgrant`, with `node_modules` installed run:
 ```
 npm i
 ```
