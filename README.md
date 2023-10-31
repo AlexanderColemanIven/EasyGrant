@@ -1,6 +1,8 @@
 # Senior Design Project
 ## EasyGrant
 
+![tests](https://github.com/github/docs/actions/workflows/test_ezgrant.yml/badge.svg)
+
 ### Running the app
 The `PATH` variables are all now setup for the Docker App, if you want to
 run this code locally you must change the path found in `sqlnet.ora`, and
