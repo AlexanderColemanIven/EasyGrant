@@ -5,11 +5,7 @@
 ![Static Badge](https://img.shields.io/badge/v16%3E%3D-Node?logoColor=%237CFC00&label=Node)
 ![Static Badge](https://img.shields.io/badge/7--slim-Node?logoColor=%237CFC00&label=oraclelinux&labelColor=%235D3FD3)
 
-### Running the app
-The `PATH` variables are all now setup for the Docker App, if you want to
-run this code locally you must change the path found in `sqlnet.ora`, and
-set your `TNS_ADMIN` env variable if using custom paths. 
- ## How to run the code with Docker:
+ ## Docker build:
 1) `cd` into the `ezgrant` directory
 2) Build using:
    ```
@@ -35,52 +31,13 @@ npm i
 ```
 node db-updater/src/web-scraping-test.js
 ```  
-   
-## How to run the React/Database code *Locally*:
-1) Find `build-resources/wallet/sqlnet.ora`
-  - Change
-    ```
-    WALLET_LOCATION = (SOURCE = (METHOD = file) (METHOD_DATA = (DIRECTORY="../app/build-resource/wallet")))
-    ```
-    to:
-    ```
-    WALLET_LOCATION = (SOURCE = (METHOD = file) (METHOD_DATA = (DIRECTORY="../ezgrant/build-resource/wallet")))
-    ```
-  - Change
-    ```
-    SSL_SERVER_DN_MATCH=no
-    ```
-    to
-    ```
-    SSL_SERVER_DN_MATCH=yes
-    ```
-2) Find `src/services/database-services.js`
-  - Change
-    ```
-    require('dotenv').config({path : '../../app/build-resource/wallet/.env'});
-    ```
-    to:
-    ```
-    require('dotenv').config({path : '../../ezgrant/build-resource/wallet/.env'});
-    ```
-3) Download the Oracle Instant Client Library for your OS here: [https://www.oracle.com/cis/database/technologies/instant-client/downloads.html](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html)
-  - MacOS: Place the UNZIPPED file into your `Downloads` folder (expects: `/Downloads/instantclient_19_8`)
-    - Rosetta is required to run Intel x86 Oracle Instant Client library
-  - Windows: Place it in `C:\\Oracle\[HERE]`  (expects: `C:\\oracle\\instantclient_19_17`)
-  - If you want to place your instant-client lib in a different location you must update your `PATH` variables accordingly
-4) Run `npm i` to install node_modules
-5) In the `ezgrant` directory run `npm run start`
 
-## Prerequisites [IMPORTANT]
-- Have Docker installed on your computer
-- Have Rosetta installed (if running locally on M1)
-- Have nodejs installed (if running locally)
-- Have npm installed (if running locally)
-- Make sure you have space on your computer to build
-  - Each time you build the codebase it will be nearly 1.5 GB!
-  - Unless you run the code locally (which you might want to setup)
-  - You can and SHOULD delete containers after running the code as you have to build each time you make a change (not needed if using `--rm` flag in your run command)
-- You may need to run `npm i docker` if on Macos
+
+## Requirements
+- [Oracle Instant Client Library](https://www.oracle.com/cis/database/technologies/instant-client/downloads.html) (already built in docker image)
+- Node v16 >=
+- npm v9.5 >=
+- [Docker](https://www.docker.com/products/docker-desktop/)
 ## Pushing Code Changes
 1) `git checkout -b [branch_name]`, the branch_name should be descriptive of the change being made
 2) `git add .`, `git commit -m "[descriptive commit message]`
