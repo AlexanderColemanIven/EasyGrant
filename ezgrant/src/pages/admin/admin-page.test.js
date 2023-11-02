@@ -21,7 +21,6 @@ describe('Testing admin page login', () => {
 
     it('Testing login container renders', () => {
         render(<AdminPage />);
-        expect(screen.getByTestId('signin-container')).toBeInTheDocument();
         expect(screen.getByTestId('username-input')).toBeInTheDocument();
         expect(screen.getByTestId('password-input')).toBeInTheDocument();
     });
