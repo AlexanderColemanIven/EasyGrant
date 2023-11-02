@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const dbConnect = require('./services/database-services');
 const qp = require('./services/query-parser');
 require('dotenv').config({path : path.resolve(__dirname, '../../build-resource/wallet/.env')});
+const { v4: uuidv4 } = require('uuid'); // for generating unique IDs
 
 
 const app = express();
@@ -13,7 +14,7 @@ const port = process.env.PORT || 4000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const server = app.listen(port, async () => {
+app.listen(port, async () => {
   await dbConnect.close();  // avoid any pool cache issues
   console.log(`Listening on port ${port}`)
   await dbConnect.initialize();
@@ -29,13 +30,20 @@ bcrypt.hash(process.env.AUTH_PASSWORD, SALT_ROUNDS, function(err, hash) {
   credentials.password = hash;
 });
 
+app.post('/api/addToGrantQueue', (req, res) => {
+  const grant = req.body;
+  grant.id = uuidv4();  // Add a unique ID to each grant
+  grantQueue.push(grant);
+  res.status(200).send({ message: 'Grant added to queue' });
+});
+
 app.post('/api/database', async (req, res) => {
-  const features = await qp.extractFeatures(req.body.post);
-  const sql = qp.generate_query(features);
-  const binds = qp.get_binds(features);
+  let sql = qp.generate_query(req.body.post);
+  let binds = qp.get_binds(req.body.post);
   const options = { outFormat: null };
-  const retval = await dbConnect.simpleExecute(sql, binds, options);
-  //console.log(retval);
+
+  let retval = await dbConnect.simpleExecute(sql, binds, options);
+  console.log(retval);
   res.send({express: retval});
 });
 
@@ -49,6 +57,27 @@ app.post('/api/login', async (req, res) => {
   });
 });
 
+// Temporary storage for the grant queue
+let grantQueue = [];
+
+// Endpoint to add a grant to the queue
+app.post('/api/addToGrantQueue', (req, res) => {
+  const grant = req.body;
+  grantQueue.push(grant);
+  res.status(200).send({ message: 'Grant added to queue' });
+});
+
+// Endpoint to get the grant queue
+app.get('/api/getGrantQueue', (req, res) => {
+  res.status(200).send(grantQueue);
+});
+
+// Endpoint to remove a grant from the queue by ID
+app.delete('/api/removeFromGrantQueue/:id', (req, res) => {
+  const { id } = req.params;
+  grantQueue = grantQueue.filter((grant) => grant.id !== id);
+  res.status(200).send({ message: `Grant with ID ${id} removed` });
+});
 
 process.on('SIGINT', gracefulShutdown)
 process.on('SIGTERM', gracefulShutdown)
