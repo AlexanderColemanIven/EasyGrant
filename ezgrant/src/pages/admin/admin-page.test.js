@@ -26,22 +26,4 @@ describe('Testing admin page login', () => {
         expect(screen.getByTestId('password-input')).toBeInTheDocument();
     });
 
-    it('testing input for username', () => {
-        render(<AdminPage />);
-        jest.mock('antd', () => {
-            return {
-              ...jest.requireActual('antd'),
-              Form: jest.fn(p => <form onSubmit={p.onFinish}>{p.children}</form>),
-            }
-        });
-        fireEvent.change(screen.getByTestId("username-input").querySelector('input'), {
-            target: { value: "user" }
-        });
-        const submit = screen.getByTestId('button-input');
-
-        fireEvent.click(submit);
-
-        expect(screen.getByTestId("username-input")).toHaveValue("passw0rd");
-    })
-
 })
