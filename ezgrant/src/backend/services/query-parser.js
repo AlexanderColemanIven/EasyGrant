@@ -254,7 +254,6 @@ function generate_query(features){
   }).join('') + ')' : '';
   if(preQuery && !sqlConditions){
     const sqlStatement = `SELECT * FROM ${SCHEMA}.${TABLE} WHERE ${preQuery}`;
-    console.log(sqlStatement);
     return sqlStatement;
   }
   if(!preQuery && sqlConditions){
