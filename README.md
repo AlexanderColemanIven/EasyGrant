@@ -94,3 +94,5 @@ for the checkboxes you can place an X between the brackets like so: "[X]"
 8) Once you merge you should see a button to delete the branch, go ahead and click that
 9) You're done!
 
+`colima start --arch aarch64 --vm-type=vz --vz-rosetta --cpu 8 --memory 8`
+`docker run --shm-size=1G --cpus="8" --memory 8g --platform=linux/amd64 -p 3000:3000 -v $(pwd):/app -ti --rm puppeteer-chrome-linux`
