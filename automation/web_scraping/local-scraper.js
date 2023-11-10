@@ -5,7 +5,9 @@ const ora = require('ora');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 const os = require('os');
 const Listr = require('listr');
+const bluebird = require("bluebird");
 
+const CONCURRENCY = 10;
 
 async function findNumPages(){
     const spinner = ora('Finding last page...').start();
@@ -85,169 +87,129 @@ async function scrapeArtistCommunities(pageNumber){
                 const location = $(grantEntry).find('.field-pseudo-field--pseudo-residency-region').text();
                 const description = $(grantEntry).find('.field--name-field-residency-description').text();
                 const applicationType = $(grantEntry).find('.field--name-field-application-type .field__item').text();
-                grants.push({'title':title, 
-                'link':null,
-                'internalLink':link, 
-                'appLink':null,
-                'organization':organization, 
-                'location':location,
-                'description':description,
-                'applicationType':applicationType,
-                'deadline':null,
-                'eligibility':null
+                grants.push({
+                    'title':title, 
+                    'location':location,
+                    'link':null,
+                    'amount':null,
+                    'description':description,
+                    'free':'Y',
+                    'eligibility':null,
+                    'deadline':null,
+                    'internalLink':link, 
+                    'appLink':null,
+                    'organization':organization, 
+                    'applicationType':applicationType,
                 });
             });
-            
-            /*
-            for (const grant of grants) {
-                //const linkedPage = await browser.newPage();
-            
-                try {
-                    await page.goto(`${grant.internalLink}`);
-                    const linkedContent = await page.content();
-                    const linked$ = cheerio.load(linkedContent);
-
-                    const linkedDescription = linked$('.field--name-field-discipline').text();
-
-                    const appPage = linked$('.open-call-list a').attr('href');
-
-                    grant.appLink = appPage ? appPage: null;
-
-                    const eligibilityArr = linkedDescription.split('\n').map(line => line.trim()).filter(Boolean);
-
-                    if (eligibilityArr.length > 0) {
-                        eligibilityArr.shift();
-                    }
-                    grant.eligibility = eligibilityArr;
-                } catch (error) {
-                    console.log("Error at Linked Page");
-                  console.error('Error:', error);
-                } finally {
-                  //await linkedPage.close();
-                }
-
-                if(grant.appLink){
-                    //const appPage = await browser.newPage();
-                    try{
-                        await page.goto(`https://artistcommunities.org${grant.appLink}`);
-                        const appContent = await page.content();
-                        const appLinked$ = cheerio.load(appContent);
-
-                        const dateMatch = appLinked$('.field--name-field-deadline').text().match(/(\w+ \d{1,2}, \d{4})/);
-                        const dateMatchBackup = appLinked$('.field--name-field-deadline').text().match(/Deadline\n(.+)/);
-
-                        const deadline = dateMatch ? dateMatch[0] : dateMatchBackup ? dateMatchBackup[0].trim() : null;
-                        const link = appLinked$('.field--name-field-application-url a').attr('href');
-
-                        grant.link = link;
-                        grant.deadline = deadline;
-
-                        delete grant.internalLink;
-                        delete grant.appLink;
-                    } catch (error) {
-                        console.log("Error at application page");
-                        console.error('Error:', error);
-                    } finally {
-                        //await appPage.close();
-                    }
-                }else{
-                    grant.link = grant.internalLink;
-                    delete grant.internalLink;
-                    delete grant.appLink;
-                }
-                
-            }
-            */
-
-            
-        })
-        
+        });
     } catch(err) {  
         console.log(err);
         return [];
     } finally {
         await browser.close();
     }
-
     return grants;
 }
 
+const withBrowser = async (fn) => {
+	const browser = await puppeteer.launch({
+        headless: "new",
+        args: ['--no-sandbox'],
+    });
+	try {
+		return await fn(browser);
+	} finally {
+		await browser.close();
+	}
+}
+
+const withPage = (browser) => async (fn) => {
+	const page = await browser.newPage();
+	try {
+		return await fn(page);
+	} finally {
+		await page.close();
+	}
+}
+
 async function scrapeArtistCommunitiesSubLink(grants){
-    for (const grant of grants) {
-        let browser;
-        try {
-            browser = await puppeteer.launch({
-                headless: "new",
-                args: ['--no-sandbox'],
+    await withBrowser(async (browser) => {
+        await bluebird.each(grants, async (grant) => {
+            await withPage(browser)(async (page) => {
+                await page.goto(`${grant.internalLink}`);
+                const linkedContent = await page.content();
+                const linked$ = cheerio.load(linkedContent);
+                const linkedDescription = linked$('.field--name-field-discipline').text();
+
+                const stipend = linked$('.field--name-field-artist-stipend .field--name-field-amount').text();
+
+                const residencyFee = linked$('.ield--name-field-residency-fees .field--name-field-amount').text();
+
+                const appFee = linked$('.field--name-field-application-fee .field--name-field-amount').text();
+
+                if(appFee){
+                    const fee = parseFloat(appFee);
+                    if(fee > 0){
+                        grant.free = 'N';
+                    }
+                }else if(residencyFee){
+                    const rfee = parseFloat(residencyFee);
+                    if(rfee > 0){
+                        grant.free = 'N';
+                    }
+                }
+
+                grant.amount = stipend;
+
+                const appPage = linked$('.open-call-list a').attr('href');
+
+                grant.appLink = appPage ? appPage: null;
+
+                const eligibilityArr = linkedDescription.split('\n').map(line => line.trim()).filter(Boolean);
+
+                if (eligibilityArr.length > 0) {
+                    eligibilityArr.shift();
+                }
+                grant.eligibility = eligibilityArr;
             });
-            const linkedPage = await browser.newPage();
-
-            await linkedPage.goto(`${grant.internalLink}`);
-            const linkedContent = await linkedPage.content();
-            const linked$ = cheerio.load(linkedContent);
-
-            const linkedDescription = linked$('.field--name-field-discipline').text();
-
-            const appPage = linked$('.open-call-list a').attr('href');
-
-            grant.appLink = appPage ? appPage: null;
-
-            const eligibilityArr = linkedDescription.split('\n').map(line => line.trim()).filter(Boolean);
-
-            if (eligibilityArr.length > 0) {
-                eligibilityArr.shift();
-            }
-            grant.eligibility = eligibilityArr;
-        } catch (error) {
-            console.log(`Error at Linked Page ${grant.internalLink}`);
-          console.error('Error:', error);
-        } finally {
-            await browser.close();
-        }
-    }
+        });
+    }, { concurrency: CONCURRENCY });
     return grants;
 }
 
 async function scrapeArtistCommunitiesAppLink(grants){
-    
-    for (const grant of grants) {
-        if(grant.appLink){
-            let browser;
-            try{
-                browser = await puppeteer.launch({
-                    headless: "new",
-                    args: ['--no-sandbox'],
-                });
-                const appPage = await browser.newPage();            
-                await appPage.goto(`https://artistcommunities.org${grant.appLink}`);
-                const appContent = await appPage.content();
-                const appLinked$ = cheerio.load(appContent);
-    
-                const dateMatch = appLinked$('.field--name-field-deadline').text().match(/(\w+ \d{1,2}, \d{4})/);
-                const dateMatchBackup = appLinked$('.field--name-field-deadline').text().match(/Deadline\n(.+)/);
-    
-                const deadline = dateMatch ? dateMatch[0] : dateMatchBackup ? dateMatchBackup[0].trim() : null;
-                const link = appLinked$('.field--name-field-application-url a').attr('href');
-    
-                grant.link = link;
-                grant.deadline = deadline;
-    
-                delete grant.internalLink;
-                delete grant.appLink;
-            } catch (error) {
-                console.log("Error at application page");
-                console.error('Error:', error);
-            } finally {
-                browser.close();
-            }
-
-        }else{
-            grant.link = grant.internalLink;
-            delete grant.internalLink;
-            delete grant.appLink;
-        }
-        
-    }
+    await withBrowser(async (browser) => {
+        await bluebird.each(grants, async (grant) => {
+            await withPage(browser)(async (page) => {
+                if(grant.appLink){
+                    try{
+                        await page.goto(`https://artistcommunities.org${grant.appLink}`);
+                        const appContent = await page.content();
+                        const appLinked$ = cheerio.load(appContent);
+            
+                        const dateMatch = appLinked$('.field--name-field-deadline').text().match(/(\w+ \d{1,2}, \d{4})/);
+                        const dateMatchBackup = appLinked$('.field--name-field-deadline').text().match(/Deadline\n(.+)/);
+            
+                        const deadline = dateMatch ? dateMatch[0] : dateMatchBackup ? dateMatchBackup[0].trim() : null;
+                        const link = appLinked$('.field--name-field-application-url a').attr('href');
+            
+                        grant.link = link;
+                        grant.deadline = deadline;
+            
+                        delete grant.internalLink;
+                        delete grant.appLink;
+                    } catch (navigationError){
+                        console.log(navigationError);
+                    }
+                }else{
+                    grant.link = grant.internalLink;
+                    delete grant.internalLink;
+                    delete grant.appLink;
+                }
+            });
+        });
+    }, { concurrency: CONCURRENCY });
     return grants;
 }
 
