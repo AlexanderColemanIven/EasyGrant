@@ -46,6 +46,7 @@ class HomePage extends Component {
           <span>EasyGrants</span>
           <div className="header-buttons">
             <button onClick={() => window.location.href="/admin"}>Admin</button>
+            <button type="primary" onClick={() => window.location.href="/postGrantsUser"}>Post a Grant</button>
             <button>Sign In</button>
             <button>Register</button>
             <button>About Us</button>

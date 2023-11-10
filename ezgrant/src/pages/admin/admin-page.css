@@ -48,9 +48,9 @@ input[type="password"] {
   justify-content: flex-end;
   align-items: right;
   width: 100%;
-  height: 100%;
+  height: 64px;
   position: fixed;
-  z-index: 1;
+  top:0
 }
 
 .admin-user-info {
