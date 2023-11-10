@@ -5,7 +5,7 @@
 ![Static Badge](https://img.shields.io/badge/v16%3E%3D-Node?logoColor=%237CFC00&label=Node)
 ![Static Badge](https://img.shields.io/badge/7--slim-Node?logoColor=%237CFC00&label=oraclelinux&labelColor=%235D3FD3)
 
- ## Docker build:
+ ### Docker build:
 1) `cd` into the `ezgrant` directory
 2) Build using:
    ```
@@ -16,21 +16,28 @@
    docker run -p 8080:8080 -v $(pwd):/app -ti --rm ezgrants
     ```
 
-## Testing
+### Testing
 In directory `ezgrant`, with `node_modules` installed run:
 ```
 npm run test
 ```
 
-## Running the web scraper
-In directory `ezgrant`, with `node_modules` installed run:
-```
-npm i
-```
+## Automated Web Scraping
 
-```
-node db-updater/src/web-scraping-test.js
-```  
+### Docker build:
+Note: Assuming system of at least 8 core CPU, if system has fewer than 8 cores please purchase a system from this decade
+0) \[Arm-based mac only] \
+`brew install colima` \
+`colima start --arch aarch64 --vm-type=vz --vz-rosetta --cpu 8 --memory 8`
+1) `cd` into the `automation` directory
+2) Build using:
+   ```
+   docker build --platform linux/amd64 --pull -t automation .   
+   ```
+3) Run
+   ```
+   docker run --shm-size=1G --memory 8g --cpus="8" --platform=linux/amd64 -p 3000:3000 -v $(pwd):/app -ti --rm automation
+    ```
 
 
 ## Requirements
