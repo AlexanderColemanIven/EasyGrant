@@ -53,20 +53,12 @@ async function simpleExecute(statement, binds = [], opts = {}) {
   try {
     conn = await oracledb.getConnection();
     result = await conn.execute(statement, binds, opts);
-    result = result.rows;   
-    return (result);
+    result = result.rows;
   } catch (err) {
     console.error(err);
     throw (err);
-  } finally {
-    if (conn) { // conn assignment worked, need to close
-      try {
-        await conn.close();
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  }
+  } 
+  return result;
 }
 
 module.exports.simpleExecute = simpleExecute;

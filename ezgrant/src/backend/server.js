@@ -15,8 +15,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const server = app.listen(port, async () => {
   await dbConnect.close();  // avoid any pool cache issues
-  console.log(`Listening on port ${port}`)
-  await dbConnect.initialize();
+  console.log(`Listening on port ${port}`);
 });
 
 const credentials = {
@@ -30,13 +29,23 @@ bcrypt.hash(process.env.AUTH_PASSWORD, SALT_ROUNDS, function(err, hash) {
 });
 
 app.post('/api/database', async (req, res) => {
-  const features = await qp.extractFeatures(req.body.post);
-  const sql = qp.generate_query(features);
-  const binds = qp.get_binds(features);
-  const options = { outFormat: null };
-  const retval = await dbConnect.simpleExecute(sql, binds, options);
-  //console.log(retval);
-  res.send({express: retval});
+  try {
+    await dbConnect.initialize()
+    // Extract features, generate SQL, and get binds
+    const features = await qp.extractFeatures(req.body.post);
+    const sql = qp.generate_query(features);
+    const binds = qp.get_binds(features);
+    // Execute the SQL query
+    const options = { outFormat: null };
+    const retval = await dbConnect.simpleExecute(sql, binds, options);
+    // Log the result and send the response
+    res.send({ express: retval });
+    await dbConnect.close();
+  } catch (err) {
+    // Log and handle errors
+    console.error(err);
+    res.status(500).send({ error: 'Internal Server Error' });
+  }
 });
 
 app.post('/api/login', async (req, res) => {

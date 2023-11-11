@@ -6,6 +6,10 @@ const { Worker, isMainThread, parentPort, workerData } = require('worker_threads
 const os = require('os');
 const Listr = require('listr');
 const bluebird = require("bluebird");
+const dbServices = require("../database_communication/database-services");
+const path = require('path');
+const { BLOB } = require('oracledb');
+require('dotenv').config({path : path.resolve(__dirname, '../build-resource/wallet/.env')});
 
 const CONCURRENCY = 10;
 
@@ -275,7 +279,34 @@ async function scrapeInParallel() {
     });
   }
 
-  
-  scrapeInParallel().then((r) => {
-    console.log(r[0]);
+const newGrantOpportunity = {
+    name: 'New Opportunity',
+    location: 'Some Location',
+    link: 'https://example.com',
+    amount: '10000',
+    about: 'Description of the opportunity',
+    free: 'Y',
+    eligibility: ['Criteria1', 'Criteria2', 'Criteria3'],
+    deadline: '2023-12-31'
+};
+async function test(){
+    await dbServices.initialize();
+    await dbServices.insertGrantOpportunity(newGrantOpportunity);
+}
+
+scrapeInParallel().then(async (grants) => {
+    await dbServices.initialize();
+    for(const grant of grants){
+        const newGrantOpportunity = {
+            name: grant.title,
+            location: grant.location,
+            link: grant.link,
+            amount: grant.amount,
+            about: grant.description,
+            free: grant.free,
+            eligibility: grant.eligibility,
+            deadline: grant.deadline
+          };
+        await dbServices.insertGrantOpportunity(newGrantOpportunity);
+    }
   });
