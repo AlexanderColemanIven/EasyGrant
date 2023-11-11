@@ -2,16 +2,70 @@ const oracledb = require('oracledb');
 const natural = require('natural');
 const nlp = require('compromise');
 const datePlugin = require('compromise-dates');
-nlp.plugin(datePlugin)
+nlp.plugin(datePlugin);
+
+const stateMappings = {
+  'ALABAMA': 'AL',
+  'ALASKA': 'AK',
+  'ARIZONA': 'AZ',
+  'ARKANSAS': 'AR',
+  'CALIFORNIA': 'CA',
+  'COLORADO': 'CO',
+  'CONNECTICUT': 'CT',
+  'DELAWARE': 'DE',
+  'FLORIDA': 'FL',
+  'GEORGIA': 'GA',
+  'HAWAII': 'HI',
+  'IDAHO': 'ID',
+  'ILLINOIS': 'IL',
+  'INDIANA': 'IN',
+  'IOWA': 'IA',
+  'KANSAS': 'KS',
+  'KENTUCKY': 'KY',
+  'LOUISIANA': 'LA',
+  'MAINE': 'ME',
+  'MARYLAND': 'MD',
+  'MASSACHUSETTS': 'MA',
+  'MICHIGAN': 'MI',
+  'MINNESOTA': 'MN',
+  'MISSISSIPPI': 'MS',
+  'MISSOURI': 'MO',
+  'MONTANA': 'MT',
+  'NEBRASKA': 'NE',
+  'NEVADA': 'NV',
+  'NEW HAMPSHIRE': 'NH',
+  'NEW JERSEY': 'NJ',
+  'NEW MEXICO': 'NM',
+  'NEW YORK': 'NY',
+  'NORTH CAROLINA': 'NC',
+  'NORTH DAKOTA': 'ND',
+  'OHIO': 'OH',
+  'OKLAHOMA': 'OK',
+  'OREGON': 'OR',
+  'PENNSYLVANIA': 'PA',
+  'RHODE ISLAND': 'RI',
+  'SOUTH CAROLINA': 'SC',
+  'SOUTH DAKOTA': 'SD',
+  'TENNESSEE': 'TN',
+  'TEXAS': 'TX',
+  'UTAH': 'UT',
+  'VERMONT': 'VT',
+  'VIRGINIA': 'VA',
+  'WASHINGTON': 'WA',
+  'WEST VIRGINIA': 'WV',
+  'WISCONSIN': 'WI',
+  'WYOMING': 'WY'
+};
+
+const numRows = 5;
 
 const {
   moreThanExpressions, 
   lessThanExpressions, 
  } = require('./keywords');
 
-const SCHEMA = "ADMIN"
-const TABLE = "GRANTS"
-
+const SCHEMA = "POSTSVC"
+const TABLE = "GRANTOPPORTUNITIES"
 
 function generateSubstrings(inputString) {
   const substrings = [];
@@ -160,6 +214,15 @@ async function extractFeatures(input) {
 
 module.exports.extractFeatures = extractFeatures;
 
+function extractStateAbbreviation(text) {
+  const normalizedText = text.trim(); // Remove leading/trailing spaces
+  for (const state in stateMappings) {
+    if (normalizedText.includes(state)) {
+      return stateMappings[state];
+    }
+  }
+  return null; // Return null if no match is found
+}
 
 function get_binds(features){
     phrases = features.leftoverMatchers;
@@ -183,15 +246,19 @@ function get_binds(features){
     if(features.amount){
       const regex = /([><=]+)\s*([\d.]+)/;
       const match = features.amount.match(regex);
-      binds.amount = { dir: oracledb.BIND_IN, val: parseFloat(match[2]), type: oracledb.NUMBER }
+      binds.amount = { dir: oracledb.BIND_IN, val: parseFloat(match[2]), type: oracledb.NUMBER };
     }
     if(features.location){
-      binds.location = { dir: oracledb.BIND_IN, val: `%${features.location}%`, type: oracledb.STRING }
+      binds.location = { dir: oracledb.BIND_IN, val: `%${features.location}%`, type: oracledb.STRING };
+      if (extractStateAbbreviation(features.location)){
+        binds.stateAbbrev = 
+        { dir: oracledb.BIND_IN, val: `${extractStateAbbreviation(features.location)}`, type: oracledb.STRING };
+      }
     }
     if(features.deadline){
-      binds.deadline = { dir: oracledb.BIND_IN, val: `${features.deadline[1]}`, type: oracledb.STRING }
+      binds.deadline = { dir: oracledb.BIND_IN, val: `${features.deadline[1]}`, type: oracledb.STRING };
       if(features.deadline.length > 2){
-        binds.start_deadline = { dir: oracledb.BIND_IN, val: `${features.deadline[2]}`, type: oracledb.STRING }
+        binds.start_deadline = { dir: oracledb.BIND_IN, val: `${features.deadline[2]}`, type: oracledb.STRING };
       }
     }
     return binds;
@@ -205,14 +272,13 @@ const conditional_or = () => { return ` OR `; }
 const variable_delimeter = (conditional) => { return ')' + conditional + '(' }
 const inflectional = (column, value) => { return `UPPER(${column}) LIKE :keyword${value}` }
 const negate_inflectional = (column, value) => { return `UPPER(${column}) NOT LIKE :keyword${value}` }
-const convertSQLDate = () => { return `TO_DATE(
-  CASE
-    WHEN REGEXP_SUBSTR(UPPER(DEADLINE), 'JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER', 1, 1, 'i') IS NOT NULL
-  THEN TO_CHAR(CURRENT_DATE, 'YYYY') || ' ' || UPPER(DEADLINE) || ' 01'
+const convertSQLDate = () => {
+  return `CASE
+  WHEN REGEXP_SUBSTR(UPPER(DEADLINE), 'JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER', 1, 1, 'i') IS NOT NULL
+  THEN TO_DATE(TO_CHAR(TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH'), 'YYYY-MM-DD'), 'YYYY-MM-DD')
   ELSE NULL
-  END,
-  'YYYY MONTH DD'
-)`}
+END`;
+};
 
 
 function generate_query(features){
@@ -223,7 +289,17 @@ function generate_query(features){
     restrictives.push(`AMOUNT IS NOT NULL 
     AND TO_NUMBER(REGEXP_REPLACE(AMOUNT, '[^0-9]+', '')) ${match[1]} :amount`);
   }
-  if (features.location){
+  if(features.location && extractStateAbbreviation(features.location)){ // if a location has a state
+      restrictives.push(`(UPPER(LOCATION) LIKE :location
+      OR UPPER(LOCATION) LIKE :stateAbbrev || ' %'
+      OR UPPER(LOCATION) LIKE '%, ' || :stateAbbrev || ' %'
+      OR UPPER(LOCATION) LIKE '%, ' || :stateAbbrev
+      OR UPPER(LOCATION) LIKE '%(' || :stateAbbrev || ')'
+      OR UPPER(LOCATION) LIKE '% ' || :stateAbbrev || ')'
+      OR UPPER(LOCATION) LIKE '% ' || :stateAbbrev || ',%'
+      OR UPPER(LOCATION) = :stateAbbrev)`);
+  }
+  else if (features.location){
     restrictives.push(`UPPER(LOCATION) LIKE :location`);
   }
   
@@ -253,11 +329,11 @@ function generate_query(features){
     }).join(conditional_or());
   }).join('') + ')' : '';
   if(preQuery && !sqlConditions){
-    const sqlStatement = `SELECT * FROM ${SCHEMA}.${TABLE} WHERE ${preQuery}`;
+    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${preQuery}`;
     return sqlStatement;
   }
   if(!preQuery && sqlConditions){
-    const sqlStatement = `SELECT * FROM ${SCHEMA}.${TABLE} WHERE ${sqlConditions}`;
+    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${sqlConditions}`;
     return sqlStatement;
   }
   if(!preQuery && !sqlConditions){
@@ -265,7 +341,7 @@ function generate_query(features){
     return sqlStatement;
   }
   
-  const sqlStatement = `SELECT * FROM ${SCHEMA}.${TABLE} WHERE ${preQuery} OR ${sqlConditions}`;
+  const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${preQuery} OR ${sqlConditions}`;
   return sqlStatement;
   
 }

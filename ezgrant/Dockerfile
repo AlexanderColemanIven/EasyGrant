@@ -35,6 +35,8 @@ ADD . /app/
 # move wallet credentials to default dir for Oracle
 COPY build-resource/wallet/* /usr/lib/oracle/19.3/client64/lib/network/admin/
 ENV TNS_ADMIN=/usr/lib/oracle/19.3/client64/lib/network/admin/
+ENV ORACLEDB_TRACE=true
+
 
 EXPOSE 8080
 EXPOSE 4000
