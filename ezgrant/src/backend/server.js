@@ -64,12 +64,17 @@ let grantQueue = [];
 
 // Endpoint to add a grant to the queue
 app.post('/api/addToGrantQueue', async (req, res) => {
-  await dbConnect.initialize();
-  const grant = req.body;
-  grant.id = uuidv4();
-  await dbConnect.enqueueGrantOpportunity(grant);
-  res.status(200).send({ message: 'Grant added to queue' });
-  await dbConnect.close();
+  try{
+    await dbConnect.initialize();
+    const grant = req.body;
+    grant.id = uuidv4();
+    await dbConnect.enqueueGrantOpportunity(grant);
+    res.status(200).send({ message: 'Grant added to queue' });
+    await dbConnect.close();
+  } catch (e){
+    console.log("Error while submitted grant", e);
+  }
+  
 });
 
 app.get('/api/getGrantQueue', async (req, res) => {

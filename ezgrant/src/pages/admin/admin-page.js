@@ -140,29 +140,27 @@ function AdminPage() {
     setIsViewing(true);
     setSelectedGrant(grant);
   };
-  useEffect(() => {
-    const fetchGrants = async () => {
-      try {
-        const response = await fetch('/api/getGrantQueue',{
-          method: 'GET',
-          headers: {
-          'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) {
-          throw new Error('HTTP error! status: ${response.status}');
-        }
-        const data = await response.json();
-        console.log("Grants data: ", data);  // Log grants data to the console
-        setGrants(data);
-    }
-      catch (error) {
-        console.error('Fetch Error:', error);
+
+  const fetchGrants = async () => {
+    try {
+      const response = await fetch('/api/getGrantQueue',{
+        method: 'GET',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('HTTP error! status: ${response.status}');
       }
-    };
-  
-    fetchGrants();
-  }, []);
+      const data = await response.json();
+      console.log("Grants data: ", data);  // Log grants data to the console
+      setGrants(data);
+    }
+    catch (error) {
+      console.error('Fetch Error:', error);
+    }
+  }
+
  
   
   const handleSubmit = async (values) => {
@@ -186,6 +184,7 @@ function AdminPage() {
         setIsSubmitted(true);
         setErrorMessages({});
         setLoggedInUser(uname);
+        await fetchGrants();
       } else {
         setErrorMessages({
           name: body.express.match_username ? "pass" : "uname",
