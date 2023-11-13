@@ -50,21 +50,20 @@ function AdminPage() {
     </Menu>
   );
   const handleDelete = async (grant) => {
+    console.log("Trying to delete", grant);
     try {
-      const response = await fetch(`/api/removeFromGrantQueue/${grant.id}`, {
-        method: 'DELETE',
+      const response = await fetch('/api/removeFromGrantQueue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: grant.ID }),
       });
-  
-      if (!response.ok) {
-        throw new Error('Network response failed.');
-      }
-  
-      const newGrants = grants.filter((g) => g.id !== grant.id);
-      setGrants(newGrants);
+      const body = await response.json();
+      setGrants(body);
       message.success('Grant deleted successfully!');
     } catch (error) {
-      console.error('Fetch Error:', error);
-      message.error('Failed to delete the grant.');
+      console.error('Error during delete operation:', error);
     }
   };
   const handleModify = () => {
@@ -81,38 +80,38 @@ function AdminPage() {
   
   const columns = [
     {
-      title: 'Name',
-      dataIndex: 'name',
+      title: 'name',
+      dataIndex: 'NAME',
       key: 'name',
     },
     
     {
       title: 'Amount',
-      dataIndex: 'amount',
+      dataIndex: 'AMOUNT',
       key: 'amount',
     },
     {
       title: 'Deadline',
-      dataIndex: 'deadline',
+      dataIndex: 'DEADLINE',
       key: 'deadline',
       render: (deadline) => {
         // Format the date to show full month name, day, and full year
-        return deadline ? moment(deadline).format('MMMM D YYYY') : 'No deadline set';
+        return deadline ? moment(deadline).format('DD MM YYYY') : 'No deadline set';
       },
     },
     {
       title: 'Category',
-      dataIndex: 'category',
+      dataIndex: 'CATEGORY',
       key: 'category',
     },
     {
       title: 'Eligibility',
-      dataIndex: 'eligibility',
+      dataIndex: 'ELIGIBILITY',
       key: 'eligibility',
     },
     {
       title: 'Date Submitted',
-      dataIndex: 'dateSubmitted',
+      dataIndex: 'TIME',
       key: 'dateSubmitted',
       render: (date) => {
         return date ? moment(date).fromNow() : 'Time unavailable';
@@ -121,7 +120,7 @@ function AdminPage() {
     
     {
       title: 'Description',
-      dataIndex: 'description',
+      dataIndex: 'ABOUT',
       key: 'description',
     },
     {
@@ -144,7 +143,12 @@ function AdminPage() {
   useEffect(() => {
     const fetchGrants = async () => {
       try {
-        const response = await fetch('/api/getGrantQueue');
+        const response = await fetch('/api/getGrantQueue',{
+          method: 'GET',
+          headers: {
+          'Content-Type': 'application/json',
+          },
+        });
         if (!response.ok) {
           throw new Error('HTTP error! status: ${response.status}');
         }
@@ -205,21 +209,21 @@ function AdminPage() {
       >
         <div>
           <span className="grant-field-icon"><IdcardOutlined /></span>
-          <span className="grant-field-name">Name</span>-<span className="grant-field-value">{grant.name}</span>
+          <span className="grant-field-name">Name</span>-<span className="grant-field-value">{grant.NAME}</span>
         </div>
         <div>
           <span className="grant-field-icon"><DollarCircleOutlined /></span>
-          <span className="grant-field-name">Amount</span>-<span className="grant-field-value">{grant.amount}</span>
+          <span className="grant-field-name">Amount</span>-<span className="grant-field-value">{grant.AMOUNT}</span>
         </div>
         <div>
           <span className="grant-field-icon"><CalendarOutlined /></span>
-          <span className="grant-field-name">Deadline</span>-<span className="grant-field-value">{new Date(grant.deadline).toLocaleDateString()}</span>
+          <span className="grant-field-name">Deadline</span>-<span className="grant-field-value">{new Date(grant.DEADLINE).toLocaleDateString()}</span>
         </div>
-        {/* ... (other fields) */}
       </Card>
     );
   };
-
+  console.log("Using following data...");
+  console.log(grants);
   return (
     <div className="admin-page">
       <header className="home-page-title">

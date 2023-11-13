@@ -29,16 +29,9 @@ bcrypt.hash(process.env.AUTH_PASSWORD, SALT_ROUNDS, function(err, hash) {
   credentials.password = hash;
 });
 
-app.post('/api/addToGrantQueue', (req, res) => {
-  const grant = req.body;
-  grant.id = uuidv4();  // Add a unique ID to each grant
-  grantQueue.push(grant);
-  res.status(200).send({ message: 'Grant added to queue' });
-});
-
 app.post('/api/database', async (req, res) => {
   try {
-    await dbConnect.initialize()
+    await dbConnect.initialize();
     // Extract features, generate SQL, and get binds
     const features = await qp.extractFeatures(req.body.post);
     const sql = qp.generate_query(features);
@@ -70,22 +63,39 @@ app.post('/api/login', async (req, res) => {
 let grantQueue = [];
 
 // Endpoint to add a grant to the queue
-app.post('/api/addToGrantQueue', (req, res) => {
+app.post('/api/addToGrantQueue', async (req, res) => {
+  await dbConnect.initialize();
   const grant = req.body;
-  grantQueue.push(grant);
+  grant.id = uuidv4();
+  await dbConnect.enqueueGrantOpportunity(grant);
   res.status(200).send({ message: 'Grant added to queue' });
+  await dbConnect.close();
 });
 
-// Endpoint to get the grant queue
-app.get('/api/getGrantQueue', (req, res) => {
-  res.status(200).send(grantQueue);
+app.get('/api/getGrantQueue', async (req, res) => {
+  try{
+    await dbConnect.initialize();
+    // Assuming you have a function to fetch grants from your database
+    const grants = await dbConnect.simpleExecute(`SELECT * FROM USERSUBMITTEDGRANTS`, [], {});
+    res.json(grants);
+    await dbConnect.close();
+    
+  }catch(e){
+    console.log("Error while fetching: ", e);
+  }
+  
 });
+// Endpoint to get the grant queue
+
 
 // Endpoint to remove a grant from the queue by ID
-app.delete('/api/removeFromGrantQueue/:id', (req, res) => {
-  const { id } = req.params;
-  grantQueue = grantQueue.filter((grant) => grant.id !== id);
-  res.status(200).send({ message: `Grant with ID ${id} removed` });
+app.post('/api/removeFromGrantQueue/', async (req, res) => {
+  await dbConnect.initialize();
+  const id = req.body.post;
+  await dbConnect.removeGrantOpportunity(id);
+  const grants = await dbConnect.simpleExecute(`SELECT * FROM USERSUBMITTEDGRANTS`, [], {});
+  res.json(grants);
+  await dbConnect.close();
 });
 
 
