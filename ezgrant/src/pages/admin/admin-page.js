@@ -222,8 +222,6 @@ function AdminPage() {
       </Card>
     );
   };
-  console.log("Using following data...");
-  console.log(grants);
   return (
     <div className="admin-page">
       <header className="home-page-title">
