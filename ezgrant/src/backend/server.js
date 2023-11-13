@@ -58,6 +58,28 @@ app.post('/api/login', async (req, res) => {
   });
 });
 
+// Temporary storage for the grant queue
+let grantQueue = [];
+
+// Endpoint to add a grant to the queue
+app.post('/api/addToGrantQueue', (req, res) => {
+  const grant = req.body;
+  grantQueue.push(grant);
+  res.status(200).send({ message: 'Grant added to queue' });
+});
+
+// Endpoint to get the grant queue
+app.get('/api/getGrantQueue', (req, res) => {
+  res.status(200).send(grantQueue);
+});
+
+// Endpoint to remove a grant from the queue by ID
+app.delete('/api/removeFromGrantQueue/:id', (req, res) => {
+  const { id } = req.params;
+  grantQueue = grantQueue.filter((grant) => grant.id !== id);
+  res.status(200).send({ message: `Grant with ID ${id} removed` });
+});
+
 
 process.on('SIGINT', gracefulShutdown)
 process.on('SIGTERM', gracefulShutdown)
