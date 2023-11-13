@@ -96,7 +96,7 @@ function AdminPage() {
       key: 'deadline',
       render: (deadline) => {
         // Format the date to show full month name, day, and full year
-        return deadline ? moment(deadline).format('DD MM YYYY') : 'No deadline set';
+        return deadline ? moment(deadline).format('DD MMMM YYYY') : 'No deadline set';
       },
     },
     {
@@ -161,8 +161,6 @@ function AdminPage() {
     }
   }
 
- 
-  
   const handleSubmit = async (values) => {
     const { uname, pass } = values;
    
