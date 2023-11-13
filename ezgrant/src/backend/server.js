@@ -69,8 +69,23 @@ app.post('/api/addToGrantQueue', async (req, res) => {
     res.status(200).send({ message: 'Grant added to queue' });
     await dbConnect.close();
   } catch (e){
-    console.log("Error while submitted grant", e);
+    console.log("Error while submitting grant", e);
   }
+  
+});
+
+// Endpoint to add a grant to the main database
+app.post('/api/addToDatabase', async (req, res) => {
+  try{
+    await dbConnect.initialize();
+    const grant = req.body;
+    await dbConnect.enqueueGrantOpportunityMain(grant);
+    res.status(200).send({ message: 'Grant added to main database' });
+    await dbConnect.close();
+  } catch (e){
+    console.log("Error while submitting grant", e);
+  }
+
   
 });
 

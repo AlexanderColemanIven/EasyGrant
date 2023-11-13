@@ -68,7 +68,6 @@ async function enqueueGrantOpportunity(newEntry) {
       return;
   }
   newEntry.eligibility = newEntry.eligibility.split(" ");
-  console.log(newEntry);
   let connection;
 
   try {
@@ -127,6 +126,67 @@ async function enqueueGrantOpportunity(newEntry) {
 }
 
 module.exports.enqueueGrantOpportunity = enqueueGrantOpportunity;
+
+async function enqueueGrantOpportunityMain(newEntry) {
+  if(newEntry.link === null){ //must have a link field
+      return;
+  }
+  let connection;
+
+  const eligibilityArray = newEntry.ELIGIBILITY.map(item => `'${item}'`).join(',');
+
+
+  try {
+    // Create a connection to the Oracle database
+    connection = await oracledb.getConnection();
+
+    // PL/SQL anonymous block to insert values into the ELIGIBILITY VARRAY
+    const plsqlBlock = `
+      DECLARE
+        eligibility_list ELIGIBLE_LIST := ELIGIBLE_LIST(${eligibilityArray});
+      BEGIN
+        INSERT INTO GRANTOPPORTUNITIES (NAME, LOCATION, LINK, AMOUNT, ABOUT, FREE, ELIGIBILITY, DEADLINE)
+        VALUES (:name, :location, :link, :amount, :about, :free, eligibility_list, :deadline);
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          NULL; -- Ignore duplicate entry error
+      END;
+    `;
+
+    // Bind the input values to the PL/SQL block
+    const binds = {
+      name: newEntry.NAME,
+      location: newEntry.LOCATION,
+      link: newEntry.LINK,
+      amount: newEntry.AMOUNT,
+      about: newEntry.DESCRIPTION,
+      free: newEntry.FREE,
+      deadline: newEntry.DEADLINE,
+    };
+
+    // Execute the PL/SQL block
+    await connection.execute(plsqlBlock, binds, { autoCommit: true });
+
+  } catch (error) {
+    // Check if the error is due to a duplicate entry
+    if (error.errorNum === 1 && error.sqlState === '23000') {
+      console.log('Duplicate entry: ignoring error.');
+    } else {
+      console.error('Error inserting into GRANTOPPORTUNITIES table:', error);
+    }
+  }finally {
+    // Release the Oracle database connection
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (error) {
+        console.error('Error closing connection:', error);
+      }
+    }
+  }
+}
+
+module.exports.enqueueGrantOpportunityMain = enqueueGrantOpportunityMain;
 
 
 async function removeGrantOpportunity(id) {

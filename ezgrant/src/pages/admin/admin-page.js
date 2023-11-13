@@ -50,7 +50,6 @@ function AdminPage() {
     </Menu>
   );
   const handleDelete = async (grant) => {
-    console.log("Trying to delete", grant);
     try {
       const response = await fetch('/api/removeFromGrantQueue', {
         method: 'POST',
@@ -69,6 +68,31 @@ function AdminPage() {
   const handleModify = () => {
     // Placeholder for future implementation (baseed on discussion with team)
   };
+
+  const handleAccept = async (grant) => {
+    try{
+      await fetch('/api/addToDatabase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(grant),
+      });
+      const response = await fetch('/api/removeFromGrantQueue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: grant.ID }),
+      });
+      const body = await response.json();
+      setGrants(body);
+      message.success('Grant accepted successfully!');
+    }catch(e){
+      console.log("Error while moving grant")
+    }
+
+  }
 
   const TimeAgo = ({ date }) => {
     // Create a moment object from the passed date prop
@@ -129,6 +153,7 @@ function AdminPage() {
       render: (text, record) => (
         <span>
           { <button onClick={() => handleView(record)}>View</button> }
+          { <button onClick={() => handleAccept(record)}>Accept</button> }
           { <button onClick={() => handleModify(record)}>Modify</button> }
           { <button onClick={() => handleDelete(record)}>Delete</button> }
         </span>
