@@ -88,6 +88,7 @@ app.delete('/api/removeFromGrantQueue/:id', (req, res) => {
   res.status(200).send({ message: `Grant with ID ${id} removed` });
 });
 
+
 process.on('SIGINT', gracefulShutdown)
 process.on('SIGTERM', gracefulShutdown)
 
