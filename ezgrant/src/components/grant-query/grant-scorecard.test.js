@@ -20,9 +20,15 @@ describe('Testing Grant Scorecard', () => {
   // check that all fields in scorecard are rendered
   it('renders all fields correctly', () => {
     // Render the Grant component with the mock data
-    render(<Grant grant={grantData} />);
+    const { container } = render(<Grant grant={grantData} />);
+    expect(
+      container.querySelector('.grant-containercollapsed .grant-name-display')
+    ).toHaveTextContent('Test Grant');
+    const expandLink = screen.getByText("Expand");
+    act(() => {
+      fireEvent.click(expandLink);
+    });
     // Use screen queries to make assertions
-    expect(screen.getByText('Test Grant')).toBeInTheDocument();
     expect(screen.getByText('Bucknell')).toBeInTheDocument();
     expect(screen.getByText('www.google.com')).toBeInTheDocument();
     expect(screen.getByText('$1000')).toBeInTheDocument();
@@ -61,7 +67,7 @@ describe('Testing Grant Scorecard', () => {
     expect(grantContainer).not.toHaveClass('expanded');
 
     // Click somewhere on the Grant scorecard
-    const randomPoint = screen.getByText("AMOUNT");
+    const randomPoint = screen.getByText("Expand");
     act(() => {
       fireEvent.click(randomPoint);
     });
