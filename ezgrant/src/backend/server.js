@@ -59,9 +59,6 @@ app.post('/api/login', async (req, res) => {
   });
 });
 
-// Temporary storage for the grant queue
-let grantQueue = [];
-
 // Endpoint to add a grant to the queue
 app.post('/api/addToGrantQueue', async (req, res) => {
   try{
@@ -77,6 +74,7 @@ app.post('/api/addToGrantQueue', async (req, res) => {
   
 });
 
+// Endpoint to get the grant queue
 app.get('/api/getGrantQueue', async (req, res) => {
   try{
     await dbConnect.initialize();
@@ -90,7 +88,6 @@ app.get('/api/getGrantQueue', async (req, res) => {
   }
   
 });
-// Endpoint to get the grant queue
 
 
 // Endpoint to remove a grant from the queue by ID
@@ -98,6 +95,7 @@ app.post('/api/removeFromGrantQueue/', async (req, res) => {
   await dbConnect.initialize();
   const id = req.body.post;
   await dbConnect.removeGrantOpportunity(id);
+  //re-update grants after delete
   const grants = await dbConnect.simpleExecute(`SELECT * FROM USERSUBMITTEDGRANTS`, [], {});
   res.json(grants);
   await dbConnect.close();

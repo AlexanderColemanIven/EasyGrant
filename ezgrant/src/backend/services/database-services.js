@@ -167,33 +167,3 @@ async function removeGrantOpportunity(id) {
 }
 
 module.exports.removeGrantOpportunity = removeGrantOpportunity;
-
-async function getGrantOpportunities() {
-  await initialize();
-  let connection;
-
-  try {
-    // Create a connection to the Oracle database
-    connection = await oracledb.getConnection();
-    const opts = {};
-    opts.outFormat = oracledb.OUT_FORMAT_OBJECT;
-
-    // PL/SQL anonymous block to dequeue the oldest item from the queue and remove it
-    const plsqlBlock = `
-      SELECT * FROM USERSUBMITTEDGRANTS`;
-
-    // Execute the PL/SQL block
-    const result = await connection.execute(plsqlBlock, [], opts);
-    return result;
-  } catch (error) {
-    // Handle connection errors, and attempt to reconnect
-    if (error.errorNum === 1017) {
-      console.error('Connection error, attempting to reconnect...');
-      // Add logic to reconnect
-    } else {
-      console.error('Error fetching USERSUBMITTEDGRANTS table:', error);
-    }
-  }
-}
-
-module.exports.getGrantOpportunities = getGrantOpportunities;
