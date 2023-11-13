@@ -1,100 +1,104 @@
-
-
 import React, { Component } from 'react';
-import './home-page.css';
+import { Input, Button, Select, DatePicker  } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 import Grant from '../../components/grant-query';
+import './home-page.css';
+
+const { Search } = Input;
+const { Option } = Select;
 
 class HomePage extends Component {
   constructor(props) {
     super(props);
     this.state = {
-        response: '',
-        post: '',
-        responseToPost: [],
-        selectedAmount: '',
-        selectedDate: '',
-        selectedEligibility: ''
-     }
-    }
-    
-    handleSubmit = async e => {
-      e.preventDefault();
+      post: '',
+      responseToPost: [],
+      selectedAmount: '',
+      selectedDate: '',
+      selectedEligibility: ''
+    };
+  }
+
+  handleSubmit = async value => {
+    // If no value is passed, use the state's post
+    const searchValue = value || this.state.post;
+    try {
       const response = await fetch('/api/database', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ post: this.state.post }),
+        body: JSON.stringify({ post: searchValue }),
       });
       const body = await response.json();
-      if (body.express){
-        let results = [];
-        body.express.map((obj) => {
-          results.push(Object.entries(obj));
-        });
-        this.setState({responseToPost: results});
-      } else {
-        this.setState({responseToPost: [""]});
-      }
-    };
+      this.setState({
+        responseToPost: body.express ? body.express.map(obj => Object.entries(obj)) : [],
+      });
+    } catch (error) {
+      console.error('Error during fetch operation:', error);
+    }
+  };
 
-    render() {
-      let {response, post, responseToPost} = this.state;
-      return (
+  redirectToHome = () => {
+    window.location.href = '/';
+  };
+
+  render() {
+    const { post, responseToPost } = this.state;
+    return (
       <div>
         <header className="home-page-title">
-          <span>EasyGrants</span>
+          <span className="logo" onClick={this.redirectToHome}style={{ cursor: 'pointer' }}>
+            EasyGrants
+          </span>
           <div className="header-buttons">
-            <button onClick={() => window.location.href="/admin"}>Admin</button>
-            <button type="primary" onClick={() => window.location.href="/postGrantsUser"}>Post a Grant</button>
-            <button>Sign In</button>
-            <button>Register</button>
-            <button>About Us</button>
+            <Button onClick={() => window.location.href="/postGrantsUser"}>Post a Grant</Button>
+            <Button>About Us</Button>
           </div>
         </header>
-        <div className="search-section">
-          <form onSubmit={this.handleSubmit}>
-            <input
-              type="text"
-              className="home-page-search"
-              value={post}
-              onChange={e => this.setState({ post: e.target.value })}
-              placeholder="Enter keyword..."
+        <div className="home-page-search">
+        <Search
+          value={post}
+          onChange={e => this.setState({ post: e.target.value })}
+          placeholder="Enter keyword..."
+          onSearch={this.handleSubmit}
+          enterButton={<Button icon={<SearchOutlined />} />} 
+        />
+        <div className="form-controls">
+            <Select
+              className="form-control"
+              onChange={selectedAmount => this.setState({ selectedAmount })}
+              placeholder="Select Amount Range"
+            >
+              <Option value="1000">Up to $1,000</Option>
+              <Option value="2000">Up to $2,000</Option>
+              <Option value="3000+">$3,000+</Option>
+              {/* ... other options */}
+            </Select>
+            <DatePicker
+              className="form-control"
+              onChange={(date, dateString) => this.setState({ selectedDate: dateString })}
             />
-            <div className="button-group">
-              <button type="submit">Post Grants</button>
-              <button>Search by Eligibility</button>
-              <button>Date</button>
-              <button>Amount</button>
-            </div>
-            <div>
-                <select className="dropdown" onChange={e => this.setState({ selectedAmount: e.target.value })}>
-                    <option value="">Select Amount Range</option>
-                    <option value="1-1000">1-1000</option>
-                    <option value="1000-10000">1000-10000</option>
-                    <option value="10000-20000">10000-20000</option>
-                    <option value="20000-30000">20000-30000</option>
-                    <option value="40000-50000">40000-50000</option>
-                    <option value="50000+">50000+</option>
-                </select>
-                <input type="date" className="date-input" onChange={e => this.setState({ selectedDate: e.target.value })} />
-                <select className="dropdown" onChange={e => this.setState({ selectedEligibility: e.target.value })}>
-                    <option value="">Select Eligibility</option>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                </select>
-            </div>
-          </form>
+            <Select
+              className="form-control"
+              onChange={selectedEligibility => this.setState({ selectedEligibility })}
+              placeholder="Select Eligibility"
+              dropdownRender={menu => <div>{menu}</div>} // To handle custom dropdown visibility
+            >
+              {/* ...options */}
+            </Select>
+          </div>
         </div>
-        {responseToPost.length > 0 && 
-        <div className="display-box">
-          {responseToPost.map((obj) => {
-            return <Grant grant={obj}></Grant>;
-          })}
-        </div>}
-      </div>
-      )
-    }
+        {responseToPost.length > 0 && (
+          <div className="display-box">
+            {responseToPost.map((obj, index) => (
+              <Grant key={index} grant={obj} />
+            ))}
+          </div>
+        )}
+        </div>
+    );
+  }
 }
 
 export default HomePage;

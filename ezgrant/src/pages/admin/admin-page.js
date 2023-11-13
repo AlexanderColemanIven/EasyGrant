@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import moment from "moment";
 import { Form, Input, Button, Alert, Layout, Menu, Dropdown, Table, message} from 'antd';
 import "./admin-page.css";
 import { Card, Empty } from 'antd';
@@ -9,6 +10,7 @@ import {
 } from '@ant-design/icons';
 
 const { Header, Content, Sider } = Layout;
+
 function ExpandedGrantCard({ grant }) {
   // Define the structure of your expanded grant card here
   return (
@@ -19,7 +21,13 @@ function ExpandedGrantCard({ grant }) {
     </Card>
   );
 }
+
+
+
 function AdminPage() {
+  const logout = () => {
+    setIsSubmitted(false);
+  };
   const [grants, setGrants] = useState([]);
   const [errorMessages, setErrorMessages] = useState({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -31,6 +39,16 @@ function AdminPage() {
     uname: "Invalid username",
     pass: "Invalid password"
   };
+  const menu = (
+    <Menu>
+      <Menu.Item key="1">
+        Settings
+      </Menu.Item>
+      <Menu.Item key="2" onClick={logout}>
+        Log Out
+      </Menu.Item>
+    </Menu>
+  );
   const handleDelete = async (grant) => {
     try {
       const response = await fetch(`/api/removeFromGrantQueue/${grant.id}`, {
@@ -52,6 +70,15 @@ function AdminPage() {
   const handleModify = () => {
     // Placeholder for future implementation (baseed on discussion with team)
   };
+
+  const TimeAgo = ({ date }) => {
+    // Create a moment object from the passed date prop
+    const timeAgo = moment(date).fromNow();
+  
+    // Render it in your component
+    return <span>{timeAgo}</span>;
+  };
+  
   const columns = [
     {
       title: 'Name',
@@ -68,6 +95,10 @@ function AdminPage() {
       title: 'Deadline',
       dataIndex: 'deadline',
       key: 'deadline',
+      render: (deadline) => {
+        // Format the date to show full month name, day, and full year
+        return deadline ? moment(deadline).format('MMMM D YYYY') : 'No deadline set';
+      },
     },
     {
       title: 'Category',
@@ -84,13 +115,10 @@ function AdminPage() {
       dataIndex: 'dateSubmitted',
       key: 'dateSubmitted',
       render: (date) => {
-        if (date) {
-          const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-          return new Date(date).toLocaleDateString('en-US', options);
-        }
-        return 'No deadline set';
+        return date ? moment(date).fromNow() : 'Time unavailable';
       },
     },
+    
     {
       title: 'Description',
       dataIndex: 'description',
@@ -108,6 +136,7 @@ function AdminPage() {
       ),
     },
   ];
+
   const handleView = (grant) => {
     setIsViewing(true);
     setSelectedGrant(grant);
@@ -131,21 +160,10 @@ function AdminPage() {
     fetchGrants();
   }, []);
  
-  const logout = () => {
-    setIsSubmitted(false);
-  };
-  const menu = (
-    <Menu>
-      <Menu.Item key="1">
-        Settings
-      </Menu.Item>
-      <Menu.Item key="2" onClick={logout}>
-        Log Out
-      </Menu.Item>
-    </Menu>
-  );
+  
   const handleSubmit = async (values) => {
     const { uname, pass } = values;
+   
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
@@ -185,15 +203,15 @@ function AdminPage() {
           overflowY: 'auto',
         }}
       >
-        <div className="grant-field">
+        <div>
           <span className="grant-field-icon"><IdcardOutlined /></span>
           <span className="grant-field-name">Name</span>-<span className="grant-field-value">{grant.name}</span>
         </div>
-        <div className="grant-field">
+        <div>
           <span className="grant-field-icon"><DollarCircleOutlined /></span>
           <span className="grant-field-name">Amount</span>-<span className="grant-field-value">{grant.amount}</span>
         </div>
-        <div className="grant-field">
+        <div>
           <span className="grant-field-icon"><CalendarOutlined /></span>
           <span className="grant-field-name">Deadline</span>-<span className="grant-field-value">{new Date(grant.deadline).toLocaleDateString()}</span>
         </div>
@@ -201,9 +219,14 @@ function AdminPage() {
       </Card>
     );
   };
+
   return (
     <div className="admin-page">
-      <a href="http://localhost:8080/" className="home-button">Homepage</a>
+      <header className="home-page-title">
+        <a href="/" className="logo" style={{ cursor: 'pointer', color: 'white', textDecoration: 'none'} }>
+            EasyGrants
+        </a>
+      </header>
       {isSubmitted ? (
         <Layout style={{ minHeight: '100vh', minWidth: '100vw' }}>
           <Header className="admin-header">

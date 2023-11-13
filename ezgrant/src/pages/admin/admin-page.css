@@ -89,7 +89,6 @@ input[type="password"] {
   margin-right: 20px;
   color: #333;
   font-size: 16px;
-  transition: color 0.3s;
 }
 
 .ant-btn-link:hover {
