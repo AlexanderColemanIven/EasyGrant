@@ -29,5 +29,6 @@ jobs:
         working-directory: ./ezgrant
         run: |
           npm cache clear --force
+          npm i
           npm ci
           npm test 
