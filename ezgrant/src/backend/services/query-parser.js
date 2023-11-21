@@ -220,7 +220,7 @@ async function extractFeatures(input) {
   return features;
 }
 
-module.exports.extractFeatures = extractFeatures;
+module.exports.extractFeatures = extractFeatures
 
 function extractStateAbbreviation(text) {
   const normalizedText = text.trim(); // Remove leading/trailing spaces

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment";
+import dayjs from 'dayjs';
 import { Form, Input, Button, Alert, Layout, Menu, Dropdown, Table, message} from 'antd';
 import "./admin-page.css";
-import { Card, Empty } from 'antd';
+import { Modal, Card, Empty, DatePicker, Select, InputNumber } from 'antd';
 import {
   EnvironmentOutlined, DollarCircleOutlined, CalendarOutlined,
   TagsOutlined, UserOutlined, IdcardOutlined, LinkOutlined,
   InfoCircleOutlined, CheckCircleOutlined,
 } from '@ant-design/icons';
-
+const { Option } = Select;
 const { Header, Content, Sider } = Layout;
 
 function ExpandedGrantCard({ grant }) {
@@ -35,6 +36,21 @@ function AdminPage() {
   const [form] = Form.useForm();
   const [isViewing, setIsViewing] = useState(false);
   const [selectedGrant, setSelectedGrant] = useState(null);
+  const [popupData, setPopupData] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [formValues, setFormValues] = useState({
+    NAME: '',
+    LOCATION: '',
+    LINK: '',
+    AMOUNT: '',
+    ABOUT: '',
+    FREE: '',
+    ELIGIBILITY: '',
+    DEADLINE: '',
+    ID: '',
+  });
+
+
   const errors = {
     uname: "Invalid username",
     pass: "Invalid password"
@@ -65,9 +81,225 @@ function AdminPage() {
       console.error('Error during delete operation:', error);
     }
   };
-  const handleModify = () => {
-    // Placeholder for future implementation (baseed on discussion with team)
+  const handleModify = async (grant) => {
+    try {
+      const response = await fetch('/api/getGrantByID', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: grant.ID }),
+      });
+
+      const body = await response.json();
+
+      const formattedDeadline = body.DEADLINE ? dayjs(body.DEADLINE).format('YYYY-MM-DD') : '';
+      console.log(body);
+      setPopupData(body); // Set the data for the popup
+      setFormValues({
+        NAME: body.NAME || '',
+        LOCATION: body.LOCATION || '',
+        LINK: body.LINK || '',
+        AMOUNT: body.AMOUNT || '',
+        ABOUT: body.ABOUT || '',
+        FREE: body.FREE || '',
+        ELIGIBILITY: body.ELIGIBILITY || '',
+        DEADLINE: formattedDeadline || '',
+        ID: body.ID || '',
+      });
+      setIsModalVisible(true); // Show the modal
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   };
+
+  const handleModalCancel = () => {
+    setIsModalVisible(false); // Hide the modal
+  };
+
+  useEffect(() => {
+    if (!popupData) {
+      setIsModalVisible(false); // Hide the modal if there is no data
+    }
+  }, [popupData]);
+
+  useEffect(() => {
+    if (popupData) {
+      form.setFieldsValue({
+        NAME: popupData.NAME || '',
+        LOCATION: popupData.LOCATION || '',
+        LINK: popupData.LINK || '',
+        AMOUNT: popupData.AMOUNT ? parseInt(popupData.AMOUNT) : '',
+        ABOUT: popupData.ABOUT || '',
+        FREE: popupData.FREE || '',
+        ELIGIBILITY: popupData.ELIGIBILITY || '',
+        DEADLINE: popupData.DEADLINE || '',
+        ID: popupData.ID || '',
+      });
+    }
+  }, [popupData, form]);
+  
+
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues((prevValues) => ({
+      ...prevValues,
+      [name]: value,
+    }));
+  };
+
+  const handleDatePickerChange = (date, dateString, fieldName) => {
+    setFormValues({ ...formValues, [fieldName]: dateString });
+  };
+
+  const handleModifyFormSubmit = async (values) => {
+    const isDeadlineChanged =
+    values.DEADLINE && dayjs(values.DEADLINE).format() !== dayjs(formValues.DEADLINE).format();
+
+    // Include the 'deadline' field only if it has been changed
+    delete values.DEADLINE;
+    const deadlineToSubmit = isDeadlineChanged ? values.DEADLINE : formValues.DEADLINE;
+    values.DEADLINE = deadlineToSubmit;
+    values.ID = formValues.ID;
+    try {
+      const response = await fetch('/api/modifyGrantByID', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: values }),
+      });
+      const body = await response.json();
+      setGrants(body);
+      setIsModalVisible(false);
+      message.success('Grant modified successfully!');
+    } catch(e){
+      console.log("Error while modifying", e);
+    }
+    // Implement your form submission logic here
+    console.log('Form submitted:', values );
+  };
+
+  const renderModalContent = () => {
+    return (
+      <div>
+        {/* Form with pre-populated values */}
+        {popupData && (
+          <Form form={form} onFinish={handleModifyFormSubmit}>
+            <div>
+              <Form.Item
+                label="Title"
+                name="NAME"
+                rules={[{ required: true, message: 'Please enter the title' },
+                { max: 255, message: 'Title must be at most 255 characters' }]}
+              >
+                <Input value={formValues.NAME} onChange={handleInputChange} />
+              </Form.Item>
+            </div>
+            <div>
+              <Form.Item
+                label="Location"
+                name="LOCATION"
+                rules={[{ required: false, message: 'Please enter the location' },
+                { max: 255, message: 'Location must be at most 255 characters' }]}
+              >
+                <Input value={formValues.LOCATION} onChange={handleInputChange} />
+              </Form.Item>
+            </div>
+            <div>
+              <Form.Item
+                label="Link"
+                name="LINK"
+                rules={[{ required: true, message: 'Please enter the link' },
+                { max: 255, message: 'Link must be at most 255 characters' }]}
+              >
+                <Input value={formValues.LINK} onChange={handleInputChange} />
+              </Form.Item>
+            </div>
+            <div>
+            <Form.Item
+              label="Amount"
+              name="AMOUNT"
+              rules={[
+                { required: false, message: 'Please enter the amount' },
+                { type: 'number', message: 'Amount must be a number' },
+              ]}
+            >
+              <InputNumber
+                value={formValues.AMOUNT}
+                onChange={(value) => handleInputChange({ target: { name: 'AMOUNT', value } })}
+              />
+            </Form.Item>
+            </div>
+            <div>
+              <Form.Item
+                label="Description"
+                name="ABOUT"
+                rules={[{ required: false, message: 'Please enter the about information' },
+                  { max: 4000, message: 'Description must be at most 4000 characters'}]}
+              >
+                <Input value={formValues.ABOUT} onChange={handleInputChange} />
+              </Form.Item>
+            </div>
+            <Form.Item
+              label="Free"
+              name="FREE"
+              rules={[{ required: false, message: 'Please select the free information' }]}
+            >
+              <Select
+                value={formValues.FREE === null ? 'Unknown' : formValues.FREE}
+                onChange={(value) => handleInputChange({ target: { name: 'FREE', value } })}
+              >
+                <Option value="Y">Yes</Option>
+                <Option value="N">No</Option>
+                <Option value="">Unknown</Option>
+              </Select>
+            </Form.Item>
+            <div>
+            <Form.Item
+              label="Eligibility"
+              name="ELIGIBILITY"
+              rules={[{ required: false, message: 'Please enter the eligibility' }]}
+            >
+              <Select
+                mode="tags"
+                value={formValues.ELIGIBILITY}
+                onChange={(values) => handleInputChange({ target: { name: 'ELIGIBILITY', value: values } })}
+              >
+                {/* Render existing tags as Options */}
+                {formValues.ELIGIBILITY.map((tag) => (
+                  <Option key={tag}>{tag}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+            </div>
+            <div>
+              <Form.Item
+                label="Deadline"
+                name="deadline"
+                rules={[{ required: false, message: 'Please select a deadline' }]}
+              >
+                <DatePicker
+                  defaultValue={
+                    formValues.DEADLINE ? dayjs(formValues.DEADLINE) : undefined
+                  }
+                  onChange={(date, dateString) =>
+                    handleDatePickerChange(date, dateString, 'DEADLINE')
+                  }
+                  format="YYYY-MM-DD"
+                />
+              </Form.Item>
+            </div>
+            <Button type="primary" htmlType="submit">
+              Save
+            </Button>
+          </Form>
+        )}
+      </div>
+    );
+  };
+  
 
   const handleAccept = async (grant) => {
     try{
@@ -104,7 +336,7 @@ function AdminPage() {
   
   const columns = [
     {
-      title: 'name',
+      title: 'Title',
       dataIndex: 'NAME',
       key: 'name',
     },
@@ -132,6 +364,9 @@ function AdminPage() {
       title: 'Eligibility',
       dataIndex: 'ELIGIBILITY',
       key: 'eligibility',
+      render: (eligibility) => {
+        return eligibility && eligibility.length > 0 ? eligibility.join(', ') : 'Not specified';
+      },
     },
     {
       title: 'Date Submitted',
@@ -156,6 +391,15 @@ function AdminPage() {
           { <button onClick={() => handleAccept(record)}>Accept</button> }
           { <button onClick={() => handleModify(record)}>Modify</button> }
           { <button onClick={() => handleDelete(record)}>Delete</button> }
+          {/* Modal */}
+          <Modal
+            title={popupData ? `Modifying Grant: ${popupData.NAME}` : 'Modifying Grant'}
+            visible={isModalVisible}
+            onCancel={handleModalCancel}
+            footer={null} // No need for the default modal footer in this case
+          >
+            {renderModalContent()}
+          </Modal>
         </span>
       ),
     },

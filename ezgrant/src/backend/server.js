@@ -104,6 +104,32 @@ app.get('/api/getGrantQueue', async (req, res) => {
   
 });
 
+app.post('/api/getGrantByID', async (req, res) => {
+  try{
+    await dbConnect.initialize();
+    const id = req.body.post;
+    const binds = {
+      id: id
+    };
+    const grant = await dbConnect.simpleExecute(`SELECT * FROM USERSUBMITTEDGRANTS WHERE ID = :id FETCH FIRST 1 ROW ONLY`, binds, {});
+    res.json(grant[0]);
+    await dbConnect.close();
+    
+  }catch(e){
+    console.log("Error while fetching: ", e);
+  }
+  
+});
+
+app.post('/api/modifyGrantByID', async (req, res) => {
+  await dbConnect.initialize();
+  const grant = req.body.post;
+  await dbConnect.updateGrantInDatabase(grant);
+  const grants = await dbConnect.simpleExecute(`SELECT * FROM USERSUBMITTEDGRANTS`, [], {});
+  res.json(grants);
+  await dbConnect.close();
+});
+
 
 // Endpoint to remove a grant from the queue by ID
 app.post('/api/removeFromGrantQueue/', async (req, res) => {

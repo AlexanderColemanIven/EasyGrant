@@ -227,3 +227,98 @@ async function removeGrantOpportunity(id) {
 }
 
 module.exports.removeGrantOpportunity = removeGrantOpportunity;
+
+async function getGrantOpportunity(id) {
+  let connection;
+
+  try {
+    // Create a connection to the Oracle database
+    connection = await oracledb.getConnection();
+
+    // PL/SQL anonymous block to insert values into the ELIGIBILITY VARRAY
+    const plsqlBlock = `SELECT * FROM USERSUBMITTEDGRANTS WHERE ID = :id FETCH FIRST 1 ROW ONLY`;
+
+    // Bind the input values to the PL/SQL block
+    const binds = {
+      id: id
+    };
+
+    // Execute the PL/SQL block
+    const retval = await connection.execute(plsqlBlock, binds, { autoCommit: true });
+    return retval;
+  } catch (error) {
+    // Check if the error is due to a duplicate entry
+    if (error.errorNum === 1 && error.sqlState === '23000') {
+      console.log('Duplicate entry: ignoring error.');
+    } else {
+      console.error(`Error finding grant with id: ${id}`, error);
+    }
+  }finally {
+    // Release the Oracle database connection
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (error) {
+        console.error('Error closing connection:', error);
+      }
+    }
+  }
+}
+
+module.exports.getGrantOpportunity = getGrantOpportunity;
+
+async function updateGrantInDatabase(grant) {
+  let connection;
+
+  try {
+    connection = await oracledb.getConnection();
+
+    const eligibilityArray = grant.ELIGIBILITY.map(item => `'${item}'`).join(',');
+
+    const sql = `
+      UPDATE USERSUBMITTEDGRANTS
+      SET
+        ABOUT = :about,
+        AMOUNT = :amount,
+        DEADLINE = TO_DATE(:deadline, 'YYYY-MM-DD'),
+        ELIGIBILITY = ELIGIBLE_LIST(${eligibilityArray}),
+        FREE = :free,
+        LINK = :link,
+        LOCATION = :location,
+        NAME = :name
+      WHERE ID = :id
+    `;
+
+    const binds = {
+      about: grant.ABOUT,
+      amount: grant.AMOUNT,
+      deadline: grant.DEADLINE,
+      free: grant.FREE,
+      link: grant.LINK,
+      location: grant.LOCATION,
+      name: grant.NAME,
+      id: grant.ID,
+    };
+
+    const options = { autoCommit: true };
+
+    const result = await connection.execute(sql, binds, options);
+
+    console.log('Rows updated:', result.rowsAffected);
+
+  } catch (error) {
+    console.error('Error updating grant in database:', error);
+
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (error) {
+        console.error('Error closing connection:', error);
+      }
+    }
+  }
+}
+
+
+module.exports.updateGrantInDatabase = updateGrantInDatabase;
