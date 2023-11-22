@@ -4,29 +4,12 @@ require('dotenv').config({path : path.resolve(__dirname, '../../../build-resourc
 const oracledb = require('oracledb');
 const dbConfig = require('dbconfig');
 
-if (process.env.NODE_ORACLEDB_DRIVER_MODE === 'thick') {
-
-  //Thick mode is apparently req here to utilize a TNS connection (including both OS's for group)
-  let clientOpts = {};
-  if (process.platform === 'win32') {                                   // Windows
-    clientOpts = { libDir: 'C:\\oracle\\instantclient_19_17' };
-    oracledb.initOracleClient(clientOpts);  // enable node-oracledb Thick mode
-  } else if (process.platform === 'darwin' && process.arch === 'x64') { // macOS Intel
-    clientOpts = { libDir: process.env.HOME + '/Downloads/instantclient_19_8' };
-    oracledb.initOracleClient(clientOpts);  // enable node-oracledb Thick mode
-  } else {
-    oracledb.initOracleClient();
-  }
-  
-}
-
 async function initialize() {
   console.log("Connecting as user: " + dbConfig.ezgrantPool.user);
   try {
     await oracledb.createPool(dbConfig.ezgrantPool);
   }catch(e){
     console.log(e);
-    initialize();
   }
   
 }

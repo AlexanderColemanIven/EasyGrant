@@ -6,7 +6,25 @@ const dbConnect = require('./services/database-services');
 const qp = require('./services/query-parser');
 require('dotenv').config({path : path.resolve(__dirname, '../../build-resource/wallet/.env')});
 const { v4: uuidv4 } = require('uuid'); // for generating unique IDs
+const oracledb = require('oracledb');
+const dbConfig = require('dbconfig');
+const { connect } = require('http2');
 
+if (process.env.NODE_ORACLEDB_DRIVER_MODE === 'thick') {
+
+  //Thick mode is apparently req here to utilize a TNS connection (including both OS's for group)
+  let clientOpts = {};
+  if (process.platform === 'win32') {                                   // Windows
+    clientOpts = { libDir: 'C:\\oracle\\instantclient_19_17' };
+    oracledb.initOracleClient(clientOpts);  // enable node-oracledb Thick mode
+  } else if (process.platform === 'darwin' && process.arch === 'x64') { // macOS Intel
+    clientOpts = { libDir: process.env.HOME + '/Downloads/instantclient_19_8' };
+    oracledb.initOracleClient(clientOpts);  // enable node-oracledb Thick mode
+  } else {
+    oracledb.initOracleClient();
+  }
+  
+}
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -17,6 +35,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const server = app.listen(port, async () => {
   await dbConnect.close();  // avoid any pool cache issues
   console.log(`Listening on port ${port}`);
+  await oracledb.createPool(dbConfig.ezgrantPool);
 });
 
 const credentials = {
@@ -30,22 +49,33 @@ bcrypt.hash(process.env.AUTH_PASSWORD, SALT_ROUNDS, function(err, hash) {
 });
 
 app.post('/api/database', async (req, res) => {
+  let connection;
   try {
-    await dbConnect.initialize();
+    connection = await oracledb.getConnection();
     // Extract features, generate SQL, and get binds
     const features = await qp.extractFeatures(req.body.post);
     const sql = qp.generate_query(features);
     const binds = qp.get_binds(features);
     // Execute the SQL query
-    const options = { outFormat: null };
-    const retval = await dbConnect.simpleExecute(sql, binds, options);
+    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+    const retval = await connection.execute(sql, binds, options);
     // Log the result and send the response
-    res.send({ express: retval });
-    await dbConnect.close();
+    res.send({ express: retval.rows });
+    //await dbConnect.close();
   } catch (err) {
     // Log and handle errors
     console.error(err);
+    console.error(err.stack);
     res.status(500).send({ error: 'Internal Server Error' });
+  } finally {
+    if (connection) {
+      try {
+        // Release the connection back to the connection pool
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
   }
 });
 
@@ -61,85 +91,254 @@ app.post('/api/login', async (req, res) => {
 
 // Endpoint to add a grant to the queue
 app.post('/api/addToGrantQueue', async (req, res) => {
-  try{
-    await dbConnect.initialize();
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
     const grant = req.body;
     grant.id = uuidv4();
-    await dbConnect.enqueueGrantOpportunity(grant);
+    grant.eligibility = grant.eligibility.split(" ");
+    const eligibilityArray = grant.eligibility.map(item => `'${item}'`).join(',');
+    const sql = `
+      DECLARE
+        eligibility_list ELIGIBLE_LIST := ELIGIBLE_LIST(${eligibilityArray});
+      BEGIN
+        INSERT INTO USERSUBMITTEDGRANTS (NAME, LOCATION, LINK, AMOUNT, ABOUT, FREE, ELIGIBILITY, DEADLINE, TIME, ID)
+        VALUES (:name, :location, :link, :amount, :about, :free, eligibility_list, :deadline, :dateSubmitted, :id);
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          NULL; -- Ignore duplicate entry error
+      END;
+    `;
+
+    // Bind the input values to the PL/SQL block
+    const binds = {
+      name: grant.name,
+      location: grant.location,
+      link: grant.link,
+      amount: grant.amount,
+      about: grant.description,
+      free: grant.free,
+      deadline: grant.deadline,
+      dateSubmitted: grant.dateSubmitted,
+      id: grant.id
+    };
+
+    // Execute the SQL query
+    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT, autoCommit: true };
+    const add = await connection.execute(sql, binds, options);
     res.status(200).send({ message: 'Grant added to queue' });
-    await dbConnect.close();
-  } catch (e){
-    console.log("Error while submitting grant", e);
+  } catch (err) {
+    // Log and handle errors
+    console.error(err);
+    res.status(500).send({ error: 'Internal Server Error' });
+  } finally {
+    if (connection) {
+      try {
+        // Release the connection back to the connection pool
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
   }
-  
 });
 
 // Endpoint to add a grant to the main database
 app.post('/api/addToDatabase', async (req, res) => {
-  try{
-    await dbConnect.initialize();
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
     const grant = req.body;
-    await dbConnect.enqueueGrantOpportunityMain(grant);
-    res.status(200).send({ message: 'Grant added to main database' });
-    await dbConnect.close();
-  } catch (e){
-    console.log("Error while submitting grant", e);
-  }
 
-  
+    const eligibilityArray = grant.ELIGIBILITY.map(item => `'${item}'`).join(',');
+    const sql = `
+      DECLARE
+        eligibility_list ELIGIBLE_LIST := ELIGIBLE_LIST(${eligibilityArray});
+      BEGIN
+        INSERT INTO GRANTOPPORTUNITIES (NAME, LOCATION, LINK, AMOUNT, ABOUT, FREE, ELIGIBILITY, DEADLINE)
+        VALUES (:name, :location, :link, :amount, :about, :free, eligibility_list, :deadline);
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          NULL; -- Ignore duplicate entry error
+      END;
+    `;
+
+    // Bind the input values to the PL/SQL block
+    const binds = {
+      name: grant.NAME,
+      location: grant.LOCATION,
+      link: grant.LINK,
+      amount: grant.AMOUNT,
+      about: grant.DESCRIPTION,
+      free: grant.FREE,
+      deadline: grant.DEADLINE,
+    };
+
+    // Execute the SQL query
+    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT, autoCommit: true };
+    const add = await connection.execute(sql, binds, options);
+    res.status(200).send({ message: 'Grant added to main database' });
+  } catch (err) {
+    // Log and handle errors
+    console.error(err);
+    res.status(500).send({ error: 'Internal Server Error' });
+  } finally {
+    if (connection) {
+      try {
+        // Release the connection back to the connection pool
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 });
 
 // Endpoint to get the grant queue
 app.get('/api/getGrantQueue', async (req, res) => {
-  try{
-    await dbConnect.initialize();
-    // Assuming you have a function to fetch grants from your database
-    const grants = await dbConnect.simpleExecute(`SELECT * FROM USERSUBMITTEDGRANTS`, [], {});
-    res.json(grants);
-    await dbConnect.close();
-    
-  }catch(e){
-    console.log("Error while fetching: ", e);
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const sql = `SELECT * FROM USERSUBMITTEDGRANTS`;
+    // Execute the SQL query
+    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+    const grants = await connection.execute(sql, [], options);
+    // Log the result and send the response
+    res.json(grants.rows);
+    //await dbConnect.close();
+  } catch (err) {
+    // Log and handle errors
+    console.error(err);
+    res.status(500).send({ error: 'Internal Server Error' });
+  } finally {
+    if (connection) {
+      try {
+        // Release the connection back to the connection pool
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
   }
   
 });
 
 app.post('/api/getGrantByID', async (req, res) => {
+  let connection;
   try{
-    await dbConnect.initialize();
+    connection = await oracledb.getConnection();
     const id = req.body.post;
     const binds = {
       id: id
     };
-    const grant = await dbConnect.simpleExecute(`SELECT * FROM USERSUBMITTEDGRANTS WHERE ID = :id FETCH FIRST 1 ROW ONLY`, binds, {});
-    res.json(grant[0]);
-    await dbConnect.close();
+    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+    const grant = await connection.execute(`SELECT * FROM USERSUBMITTEDGRANTS WHERE ID = :id FETCH FIRST 1 ROW ONLY`, binds, options);
+    res.json(grant.rows[0]);
     
   }catch(e){
     console.log("Error while fetching: ", e);
+  }finally {
+    if (connection) {
+      try {
+        // Release the connection back to the connection pool
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
   }
   
 });
 
 app.post('/api/modifyGrantByID', async (req, res) => {
-  await dbConnect.initialize();
-  const grant = req.body.post;
-  await dbConnect.updateGrantInDatabase(grant);
-  const grants = await dbConnect.simpleExecute(`SELECT * FROM USERSUBMITTEDGRANTS`, [], {});
-  res.json(grants);
-  await dbConnect.close();
+  let connection;
+  try{
+    connection = await oracledb.getConnection();
+    const grant = req.body.post;
+
+    const eligibilityArray = grant.ELIGIBILITY.map(item => `'${item}'`).join(',');
+
+    const sql = `
+      UPDATE USERSUBMITTEDGRANTS
+      SET
+        ABOUT = :about,
+        AMOUNT = :amount,
+        DEADLINE = TO_DATE(:deadline, 'YYYY-MM-DD'),
+        ELIGIBILITY = ELIGIBLE_LIST(${eligibilityArray}),
+        FREE = :free,
+        LINK = :link,
+        LOCATION = :location,
+        NAME = :name
+      WHERE ID = :id
+    `;
+
+    const binds = {
+      about: grant.ABOUT,
+      amount: grant.AMOUNT,
+      deadline: grant.DEADLINE,
+      free: grant.FREE,
+      link: grant.LINK,
+      location: grant.LOCATION,
+      name: grant.NAME,
+      id: grant.ID,
+    };
+    const modOptions = { outFormat: oracledb.OUT_FORMAT_OBJECT, autoCommit: true }
+    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+
+    const result = await connection.execute(sql, binds, modOptions);
+
+    console.log('Rows updated:', result.rowsAffected);
+
+    const fetchSql = `SELECT * FROM USERSUBMITTEDGRANTS`;
+    const grants = await connection.execute(fetchSql, [], options);
+    res.json(grants.rows);
+  } catch (error) {
+    console.error('Error updating grant in database:', error);
+  } finally {
+    if (connection) {
+      try {
+        // Release the connection back to the connection pool
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 });
 
 
 // Endpoint to remove a grant from the queue by ID
 app.post('/api/removeFromGrantQueue/', async (req, res) => {
-  await dbConnect.initialize();
-  const id = req.body.post;
-  await dbConnect.removeGrantOpportunity(id);
-  //re-update grants after delete
-  const grants = await dbConnect.simpleExecute(`SELECT * FROM USERSUBMITTEDGRANTS`, [], {});
-  res.json(grants);
-  await dbConnect.close();
+  let connection;
+  try{
+    connection = await oracledb.getConnection();
+    const id = req.body.post;
+
+    const sql = `DELETE FROM USERSUBMITTEDGRANTS WHERE ID = :id`;
+
+    const binds = {
+      id: id
+    };
+
+    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+    
+    const del = await connection.execute(sql, binds, { autoCommit: true });
+
+    const fetchSql = `SELECT * FROM USERSUBMITTEDGRANTS`;
+    const grants = await connection.execute(fetchSql, [], options);
+    res.json(grants.rows);
+  } catch (error) {
+    console.error('Error updating grant in database:', error);
+  } finally {
+    if (connection) {
+      try {
+        // Release the connection back to the connection pool
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 });
 
 
