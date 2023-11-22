@@ -96,8 +96,8 @@ app.post('/api/addToGrantQueue', async (req, res) => {
     connection = await oracledb.getConnection();
     const grant = req.body;
     grant.id = uuidv4();
-    grant.eligibility = grant.eligibility.split(" ");
-    const eligibilityArray = grant.eligibility.map(item => `'${item}'`).join(',');
+
+    const eligibilityArray = grant.ELIGIBILITY.map(item => `'${item}'`).join(',');
     const sql = `
       DECLARE
         eligibility_list ELIGIBLE_LIST := ELIGIBLE_LIST(${eligibilityArray});
@@ -112,14 +112,14 @@ app.post('/api/addToGrantQueue', async (req, res) => {
 
     // Bind the input values to the PL/SQL block
     const binds = {
-      name: grant.name,
-      location: grant.location,
-      link: grant.link,
-      amount: grant.amount,
-      about: grant.description,
-      free: grant.free,
-      deadline: grant.deadline,
-      dateSubmitted: grant.dateSubmitted,
+      name: grant.NAME,
+      location: grant.LOCATION,
+      link: grant.LINK,
+      amount: grant.AMOUNT,
+      about: grant.ABOUT,
+      free: grant.FREE,
+      deadline: grant.DEADLINE,
+      dateSubmitted: grant.DATESUBMITTED,
       id: grant.id
     };
 
