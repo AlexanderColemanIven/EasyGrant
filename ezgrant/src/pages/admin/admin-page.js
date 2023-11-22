@@ -5,24 +5,11 @@ import { Form, Input, Button, Alert, Layout, Menu, Dropdown, Table, message} fro
 import "./admin-page.css";
 import { Modal, Card, Empty, DatePicker, Select, InputNumber } from 'antd';
 import {
-  EnvironmentOutlined, DollarCircleOutlined, CalendarOutlined,
-  TagsOutlined, UserOutlined, IdcardOutlined, LinkOutlined,
-  InfoCircleOutlined, CheckCircleOutlined,
+  DollarCircleOutlined, CalendarOutlined,
+  UserOutlined, IdcardOutlined,
 } from '@ant-design/icons';
 const { Option } = Select;
-const { Header, Content, Sider } = Layout;
-
-function ExpandedGrantCard({ grant }) {
-  // Define the structure of your expanded grant card here
-  return (
-    <Card title={grant.name}>
-      <p>Amount: {grant.amount}</p>
-      <p>Deadline: {grant.deadline}</p>
-      {/* ... other grant details */}
-    </Card>
-  );
-}
-
+const { Header, Content } = Layout;
 
 
 function AdminPage() {
@@ -325,14 +312,6 @@ function AdminPage() {
     }
 
   }
-
-  const TimeAgo = ({ date }) => {
-    // Create a moment object from the passed date prop
-    const timeAgo = moment(date).fromNow();
-  
-    // Render it in your component
-    return <span>{timeAgo}</span>;
-  };
   
   const columns = [
     {
@@ -387,7 +366,6 @@ function AdminPage() {
       key: 'actions',
       render: (text, record) => (
         <span>
-          { <button onClick={() => handleView(record)}>View</button> }
           { <button onClick={() => handleAccept(record)}>Accept</button> }
           { <button onClick={() => handleModify(record)}>Modify</button> }
           { <button onClick={() => handleDelete(record)}>Delete</button> }
@@ -410,6 +388,17 @@ function AdminPage() {
     setSelectedGrant(grant);
   };
 
+  const onRow = (record, rowIndex) => {
+    return {
+      onClick: (event) => {
+        const isButtonClick = event.target.tagName === 'BUTTON';
+        if(!isModalVisible && !isButtonClick){
+          handleView(record, event);
+        }
+      },
+    };
+  };
+
   const fetchGrants = async () => {
     try {
       const response = await fetch('/api/getGrantQueue',{
@@ -419,7 +408,7 @@ function AdminPage() {
         },
       });
       if (!response.ok) {
-        throw new Error('HTTP error! status: ${response.status}');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       console.log("Grants data: ", data);  // Log grants data to the console
@@ -519,7 +508,7 @@ function AdminPage() {
                 <ExpandedGrantCard grant={selectedGrant} />
               </div>
             ) : grants.length > 0 ? (
-              <Table dataSource={grants} columns={columns} rowKey="id" />
+              <Table dataSource={grants} columns={columns} rowKey="id" onRow={onRow}/>
             ) : (
               <Empty description="No user-submitted grants yet!" />
               )}
