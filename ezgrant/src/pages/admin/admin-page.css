@@ -94,3 +94,111 @@ input[type="password"] {
 .ant-btn-link:hover {
   color: #006aff;
 }
+
+.expanded-row {
+  overflow: hidden; /* Ensure content doesn't overflow during animation */
+  transition: height 0.5s ease; /* Adjust the duration and easing as needed */
+}
+
+.title-column {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px; /* Set a max-width if needed */
+}
+
+.amount-column {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px; /* Set a max-width if needed */
+}
+
+.deadline-column {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px; /* Set a max-width if needed */
+}
+
+.eligibility-column {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px; /* Set a max-width if needed */
+}
+
+.date-submitted-column {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px; /* Set a max-width if needed */
+}
+
+.description-column {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px; /* Set a max-width if needed */
+}
+
+.actions-column {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expanded-row .title-column {
+  white-space: normal; /* Allow line breaks */
+  overflow: visible; /* Allow vertical overflow */
+  text-overflow: clip; /* No ellipsis */
+  vertical-align: top; 
+  max-width: 150px;
+}
+
+.expanded-row .amount-column {
+  white-space: normal; /* Allow line breaks */
+  overflow: visible; /* Allow vertical overflow */
+  text-overflow: clip; /* No ellipsis */
+  vertical-align: top; 
+  max-width: 100px;
+}
+
+.expanded-row .deadline-column {
+  white-space: normal; /* Allow line breaks */
+  overflow: visible; /* Allow vertical overflow */
+  text-overflow: clip; /* No ellipsis */
+  vertical-align: top; 
+  max-width: 120px;
+}
+
+.expanded-row .eligibility-column {
+  white-space: normal; /* Allow line breaks */
+  overflow: visible; /* Allow vertical overflow */
+  text-overflow: clip; /* No ellipsis */
+  vertical-align: top; 
+  max-width: 120px;
+}
+
+.expanded-row .date-submitted-column {
+  white-space: normal; /* Allow line breaks */
+  overflow: visible; /* Allow vertical overflow */
+  text-overflow: clip; /* No ellipsis */
+  vertical-align: top; 
+  max-width: 120px;
+}
+
+.expanded-row .description-column {
+  white-space: normal; /* Allow line breaks */
+  overflow: visible; /* Allow vertical overflow */
+  text-overflow: clip; /* No ellipsis */
+  vertical-align: top; 
+  max-width: 120px;
+}
+
+.expanded-row .actions-column {
+  white-space: normal; /* Allow line breaks */
+  overflow: visible; /* Allow vertical overflow */
+  text-overflow: clip; /* No ellipsis */
+  vertical-align: top; 
+}

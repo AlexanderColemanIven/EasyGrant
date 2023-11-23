@@ -3,7 +3,7 @@ import moment from "moment";
 import dayjs from 'dayjs';
 import { Form, Input, Button, Alert, Layout, Menu, Dropdown, Table, message} from 'antd';
 import "./admin-page.css";
-import { Modal, Card, Empty, DatePicker, Select, InputNumber } from 'antd';
+import { Modal, Card, Empty, DatePicker, Select, InputNumber, Tag } from 'antd';
 import {
   DollarCircleOutlined, CalendarOutlined,
   UserOutlined, IdcardOutlined,
@@ -25,6 +25,7 @@ function AdminPage() {
   const [selectedGrant, setSelectedGrant] = useState(null);
   const [popupData, setPopupData] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [expandedRowKeys, setExpandedRowKeys] = useState(new Set());
   const [formValues, setFormValues] = useState({
     NAME: '',
     LOCATION: '',
@@ -102,6 +103,7 @@ function AdminPage() {
 
   const handleModalCancel = () => {
     setIsModalVisible(false); // Hide the modal
+    setSelectedGrant(null);
   };
 
   useEffect(() => {
@@ -318,31 +320,30 @@ function AdminPage() {
       title: 'Title',
       dataIndex: 'NAME',
       key: 'name',
+      className: 'title-column',
     },
     
     {
       title: 'Amount',
       dataIndex: 'AMOUNT',
       key: 'amount',
+      className: 'amount-column',
     },
     {
       title: 'Deadline',
       dataIndex: 'DEADLINE',
       key: 'deadline',
+      className: 'deadline-column',
       render: (deadline) => {
         // Format the date to show full month name, day, and full year
         return deadline ? moment(deadline).format('DD MMMM YYYY') : 'No deadline set';
       },
     },
     {
-      title: 'Category',
-      dataIndex: 'CATEGORY',
-      key: 'category',
-    },
-    {
       title: 'Eligibility',
       dataIndex: 'ELIGIBILITY',
       key: 'eligibility',
+      className: 'eligibility-column',
       render: (eligibility) => {
         return eligibility && eligibility.length > 0 ? eligibility.join(', ') : 'Not specified';
       },
@@ -351,6 +352,7 @@ function AdminPage() {
       title: 'Date Submitted',
       dataIndex: 'TIME',
       key: 'dateSubmitted',
+      className: 'date-submitted-column',
       render: (date) => {
         return date ? moment(date).fromNow() : 'Time unavailable';
       },
@@ -360,19 +362,22 @@ function AdminPage() {
       title: 'Description',
       dataIndex: 'ABOUT',
       key: 'description',
+      className: 'description-column',
     },
     {
       title: 'Actions',
       key: 'actions',
+      className: 'actions-column',
       render: (text, record) => (
         <span>
+          { <button onClick={() => handleView(record)}>All Info</button> }
           { <button onClick={() => handleAccept(record)}>Accept</button> }
           { <button onClick={() => handleModify(record)}>Modify</button> }
           { <button onClick={() => handleDelete(record)}>Delete</button> }
           {/* Modal */}
           <Modal
             title={popupData ? `Modifying Grant: ${popupData.NAME}` : 'Modifying Grant'}
-            visible={isModalVisible}
+            open={isModalVisible}
             onCancel={handleModalCancel}
             footer={null} // No need for the default modal footer in this case
           >
@@ -388,16 +393,35 @@ function AdminPage() {
     setSelectedGrant(grant);
   };
 
-  const onRow = (record, rowIndex) => {
+  const onRow = (record) => {
+    const isExpanded = expandedRowKeys.has(record.ID);
+  
     return {
       onClick: (event) => {
         const isButtonClick = event.target.tagName === 'BUTTON';
-        if(!isModalVisible && !isButtonClick){
-          handleView(record, event);
+        if (!isModalVisible && !isButtonClick) {
+          handleRowClick(record);
         }
       },
+      className: isExpanded ? 'expanded-row' : '', // Add or remove the 'expanded-row' class
     };
   };
+  
+  const handleRowClick = (record) => {
+    setExpandedRowKeys((prevExpandedRowKeys) => {
+      const newExpandedRowKeys = new Set(prevExpandedRowKeys);
+  
+      if (newExpandedRowKeys.has(record.ID)) {
+        newExpandedRowKeys.delete(record.ID); // Remove if already expanded
+      } else {
+        newExpandedRowKeys.add(record.ID); // Add if not expanded
+      }
+  
+      return newExpandedRowKeys;
+    });
+  };
+  
+
 
   const fetchGrants = async () => {
     try {
@@ -452,36 +476,36 @@ function AdminPage() {
     }
   };
   const ExpandedGrantCard = ({ grant }) => {
+    const filteredGrant = Object.fromEntries(
+      Object.entries(grant).filter(([key]) => key !== 'ID' && key !== 'TIME')
+    );
+  
     return (
-      <Card
-        title={grant.name}
-        className="expanded-card"
-        style={{
-          width: '100%',
-          maxHeight: '100vh',
-          overflowY: 'auto',
-        }}
-      >
-        <div>
-          <span className="grant-field-icon"><IdcardOutlined /></span>
-          <span className="grant-field-name">Name</span>-<span className="grant-field-value">{grant.NAME}</span>
-        </div>
-        <div>
-          <span className="grant-field-icon"><DollarCircleOutlined /></span>
-          <span className="grant-field-name">Amount</span>-<span className="grant-field-value">{grant.AMOUNT}</span>
-        </div>
-        <div>
-          <span className="grant-field-icon"><CalendarOutlined /></span>
-          <span className="grant-field-name">Deadline</span>-<span className="grant-field-value">{new Date(grant.DEADLINE).toLocaleDateString()}</span>
-        </div>
-      </Card>
+      <div className="expanded-card">
+        {Object.entries(filteredGrant).map(([key, value]) => (
+          <div key={key}>
+            <span className="grant-field-name">{key}</span>:
+            {key === 'ELIGIBILITY' ? (
+              <div className="ellipsis-text">
+                {value.map((eligibility, index) => (
+                  <Tag key={index} className="tag">
+                    {eligibility}
+                  </Tag>
+                ))}
+              </div>
+            ) : (
+              <span className="grant-field-value ellipsis-text">{value}</span>
+            )}
+          </div>
+        ))}
+      </div>
     );
   };
   return (
     <div className="admin-page">
       <header className="home-page-title">
-        <a href="/" className="logo" style={{ cursor: 'pointer', color: 'white', textDecoration: 'none'} }>
-            EasyGrants
+        <a href="/" className="logo" style={{ cursor: 'pointer', color: 'white', textDecoration: 'none' }}>
+          EasyGrants
         </a>
       </header>
       {isSubmitted ? (
@@ -493,25 +517,27 @@ function AdminPage() {
                   {loggedInUser} <UserOutlined />
                 </a>
               </Dropdown>
-              <Button
-                type="link"
-                style={{ color: '#1890ff' }}
-                onClick={() => window.location.href = '/'}
-              >
+              <Button type="link" style={{ color: '#1890ff' }} onClick={() => window.location.href = '/'}>
                 Home
               </Button>
             </div>
           </Header>
           <Content className="admin-content">
-            {isViewing ? (
-              <div onClick={() => setIsViewing(false)}>
+            {isViewing && selectedGrant && (
+              <Modal
+                title={selectedGrant.NAME}
+                visible={isViewing}
+                onCancel={handleModalCancel}
+                footer={null}
+              >
                 <ExpandedGrantCard grant={selectedGrant} />
-              </div>
-            ) : grants.length > 0 ? (
-              <Table dataSource={grants} columns={columns} rowKey="id" onRow={onRow}/>
+              </Modal>
+            )}
+            {grants.length > 0 ? (
+              <Table dataSource={grants} columns={columns} rowKey="id" onRow={onRow} />
             ) : (
               <Empty description="No user-submitted grants yet!" />
-              )}
+            )}
           </Content>
         </Layout>
       ) : (
