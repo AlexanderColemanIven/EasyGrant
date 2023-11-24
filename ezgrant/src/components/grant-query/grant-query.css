@@ -1,64 +1,63 @@
+
+.display-box {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px; /* Adjust the gap between the cards */
+  margin-left: -3px;
+}
 /* Additional styles for Card component */
-
-/* Center-aligns and sets the font size for the title in the card header */
-.ant-card-head {
-  text-align: center;
-  font-size: 5rem;
-}
-
-/* Sets the font size for the body content of the card */
-.ant-card-body {
-  font-size: 2rem;
-}
-
 /* Styles for the grant container when it is not expanded */
 .grant-container {
-  padding-left: 10px; /* Adds padding on the left */
-  color: aqua; /* Sets text color */
-  transition: all 0.3s ease; /* Animates any changes */
-  overflow-y: auto; /* Enables vertical scrolling */
-  max-height: 300px; /* Sets maximum height */
-  margin-top: 16px; /* Adds margin to the top */
-  margin-bottom: 16px; /* Adds margin to the bottom */
+  flex: 0 0 calc(16.66% - 10px); /* Adjust the width for 6 items per row, subtracting the gap */
+  /* width: calc((100% - 60px) / 6); */ /* Assuming 10px gap, adjust if different */
+  margin-top: 1px; /* Adds margin to the top */
+  padding-left: 6px; /* Adds padding on the left */
+  border-radius: 8px; /* Rounded corners for a modern look */
+  cursor: pointer; /* Indicate it can be clicked */
+  margin-left: 3px;
+  height: 100px;
 }
 
-/* Styles for the card title when the card is expanded */
-.expanded-card .ant-card-head-title {
-  text-align: center;
+.grant-container.collapsed {
+  cursor: pointer; /* Indicate it can be clicked */
+  margin-bottom: 0px;
 }
-
-/* Font size adjustments for fields and action links when card is expanded */
-.expanded-card .grant-field,
-.expanded-card .grant-action-links {
-  font-size: larger;
+/* alters fields in expanded grant component*/
+.expanded-card {
+  margin-bottom: 2rem;
+  /* Add additional styles for the expanded state */
 }
-
-/* Styles for the grant container when it is expanded */
+/* expanded grant container's fields */
 .grant-container.expanded {
-  width: 100%;
+  width: 94%;
   position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
+  top: 52px; /* don't change this value */
+  margin-right: 50px;
   right: 0;
-  z-index: 9999; /* Ensures the expanded card is above all other content */
-  max-height: 100vh; /* Sets maximum height to full viewport height */
+  bottom: 100px;
+  z-index: 9999;
+  max-height: 100vh;
+  min-height: 80vh;
+  margin-bottom: 5px;
 }
 
-/* Font size for card body when not expanded */
-.grant-container .ant-card-body {
-  font-size: 1rem;
+/* grant name display for both expanded and collapsed */
+.grant-name-display {
+  padding: 10px;
+  font-weight: bold; /* Make the text bold */
+  text-align: center; /* Center the text */
+  font-size: 1.5rem; /* Larger font size */
+  display: block; 
+  border-radius: 8px; /* Rounded corners for a modern look */
+  cursor: pointer; /* Indicate it can be clicked */
 }
-
-/* Font size for card body when expanded */
+/* expanded grant field alterations */
 .grant-container.expanded .ant-card-body {
   font-size: 1.5rem;
-}
-
-/* Styles for the card title */
-.ant-card .ant-card-head-title {
-  text-align: center;
-  font-size: 1.5rem !important; /* Overrides any other font size settings */
+  margin-top: 10px;
+  margin-bottom: 5rem;
+  margin-left: 50px;
 }
 
 /* Makes the field name bold */
@@ -68,17 +67,44 @@
 
 /* Adds margin to action links */
 .grant-action-links {
-  margin-top: 10px;
+  margin-top: -15px;
 }
 
 /* Styles for the "Apply" and "Learn More" links */
-.grant-apply-link,
-.grant-learn-more-link {
+.grant-apply-link{
   margin-right: 15px; /* Adds margin to the right */
   font-weight: bold; /* Makes text bold */
 }
 
+.grant-about-link{
+  margin-right: 15px; /* Adds margin to the right */
+  font-weight: bold; /* Makes text bold */
+}
+
+
 /* Adds margin to the right of the field icon */
 .grant-field-icon {
   margin-right: 5px;
+}
+
+.no-scroll {
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Overlay styles */
+.overlay {
+  display: none; /* Hidden by default */
+  position: fixed; /* Cover the entire viewport */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+  z-index: 9998; /* Ensure it's below the expanded card but above other content */
+}
+
+/* When the overlay is active */
+.overlay.active {
+  display: block; /* Show the overlay */
 }

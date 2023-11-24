@@ -93,6 +93,7 @@ async function extractFeatures(input) {
     amount: null,
     location: null,
     deadline: null,
+    secondaryDeadline: null, //used for feature conflicts
     tags: null,
     leftoverMatchers: null,
   }
@@ -170,34 +171,41 @@ async function extractFeatures(input) {
     input = input.replace(doc_query.match('#Noun #Preposition #Value').text(), "");
   }
   else if(doc_query.has('at least #Value')){
-    features.amount = `> ${await doc_query.match('at least #Value').text().match(/\d+(\.\d+)?/)[0]}`;
+    features.amount = `>= ${await doc_query.match('at least #Value').text().match(/\d+(\.\d+)?/)[0]}`;
     input = input.replace(doc_query.match('at least #Value').text(), "");
+  }
+  else if(doc_query.has('#Value')){
+    features.amount = `>= ${doc_query.match('#Value').text().match(/\d+(\.\d+)?/)[0]}`;
+    //dont replace input as lone amount could be part of another field
   }
 
   doc_query = nlp(input);
   features.location = await doc_query.places().text(); // Find location
 
-  if(doc_query.has('BEFORE #Date') || doc_query.has('BY #Date')){
+  if(doc_query.has('AFTER #Date')){
+    const date = doc_query.dates().format('yyyy-mm-dd').text();
+    features.deadline = ['>=', date.split(' to ').length > 1 ? date.split(' to ')[1] : date];
+  }
+  else if(doc_query.has('#Date')){
     const date = doc_query.dates().format('yyyy-mm-dd').text();
     features.deadline = ['<=', date.split(' to ').length > 1 ? date.split(' to ')[1] : date];
   }
-  else if(doc_query.has('AFTER #Date')){
+
+  if(features.deadline && features.amount){ //amount can be ambiguous with year
     const date = doc_query.dates().format('yyyy-mm-dd').text();
-    features.deadline = ['>=', date.split(' to ').length > 1 ? date.split(' to ')[1] : date];
-    
-  }else if(doc_query.has('#Date')){
-    const date = doc_query.dates().format('yyyy-mm-dd').text();
-    if(date.split(' to ').length > 1){
-      const originalDate = new Date( date.split(' to ')[1]);
-      originalDate.setFullYear(originalDate.getFullYear() - 1);
-      const decrementedDateString = originalDate.toISOString().split('T')[0];
-      const s_originalDate = new Date( date.split(' to ')[0]);
-      s_originalDate.setFullYear(originalDate.getFullYear() - 1);
-      const s_decrementedDateString = s_originalDate.toISOString().split('T')[0];
-      features.deadline = ['=', decrementedDateString, s_decrementedDateString];
-    }else{
-      features.deadline = ['=', date];
+    const inputDate = new Date(date[1]);
+    const currentDate = new Date();
+    if (inputDate.getMonth() < currentDate.getMonth() || 
+        (inputDate.getMonth() === currentDate.getMonth() && inputDate.getDate() < currentDate.getDate())) {
+      inputDate.setFullYear(currentDate.getFullYear() + 1);
+    } else {
+      // If the input month is yet to happen, keep the current year
+      inputDate.setFullYear(currentDate.getFullYear());
     }
+    
+    // Format the updated date as 'yyyy-mm-dd'
+    const updatedDateString = inputDate.toISOString().slice(0, 10);
+    features.secondaryDeadline = updatedDateString;
   }
 
   input = input.replace(features.location, "");
@@ -212,7 +220,7 @@ async function extractFeatures(input) {
   return features;
 }
 
-module.exports.extractFeatures = extractFeatures;
+module.exports.extractFeatures = extractFeatures
 
 function extractStateAbbreviation(text) {
   const normalizedText = text.trim(); // Remove leading/trailing spaces
@@ -261,6 +269,9 @@ function get_binds(features){
         binds.start_deadline = { dir: oracledb.BIND_IN, val: `${features.deadline[2]}`, type: oracledb.STRING };
       }
     }
+    if(features.secondaryDeadline){
+      binds.secondaryDeadline = { dir: oracledb.BIND_IN, val: `${features.secondaryDeadline}`, type: oracledb.STRING };
+    }
     return binds;
 }
 
@@ -283,12 +294,31 @@ END`;
 
 function generate_query(features){
   let restrictives = [];
-  if (features.amount){
+  if(features.secondaryDeadline){ //then we have an amount and a deadline which can conflict
     const regex = /([><=]+)\s*([\d.]+)/;
     const match = features.amount.match(regex);
-    restrictives.push(`AMOUNT IS NOT NULL 
-    AND TO_NUMBER(REGEXP_REPLACE(AMOUNT, '[^0-9]+', '')) ${match[1]} :amount`);
+    restrictives.push(`((AMOUNT IS NOT NULL 
+      AND TO_NUMBER(REGEXP_REPLACE(AMOUNT, '[^0-9]+', '')) ${match[1]} :amount AND 
+      ${convertSQLDate()} ${features.deadline[0]} TO_DATE(:deadline, 'YYYY-MM-DD')) OR 
+      ${convertSQLDate()} <= TO_DATE(:secondaryDeadline, 'YYYY-MM-DD'))`);
+  }else{
+    if (features.amount){
+      const regex = /([><=]+)\s*([\d.]+)/;
+      const match = features.amount.match(regex);
+      restrictives.push(`AMOUNT IS NOT NULL 
+      AND TO_NUMBER(REGEXP_REPLACE(AMOUNT, '[^0-9]+', '')) ${match[1]} :amount`);
+    }
+
+    if (features.deadline){
+      if(features.deadline.length > 2){
+        restrictives.push(`${convertSQLDate()} BETWEEN TO_DATE(:start_deadline, 'YYYY-MM-DD') AND TO_DATE(:deadline, 'YYYY-MM-DD')`)
+      }else{
+        restrictives.push(`${convertSQLDate()} ${features.deadline[0]} TO_DATE(:deadline, 'YYYY-MM-DD')`)
+      }
+    }
+    
   }
+  
   if(features.location && extractStateAbbreviation(features.location)){ // if a location has a state
       restrictives.push(`(UPPER(LOCATION) LIKE :location
       OR UPPER(LOCATION) LIKE :stateAbbrev || ' %'
@@ -301,14 +331,6 @@ function generate_query(features){
   }
   else if (features.location){
     restrictives.push(`UPPER(LOCATION) LIKE :location`);
-  }
-  
-  if (features.deadline){
-    if(features.deadline.length > 2){
-      restrictives.push(`${convertSQLDate()} BETWEEN TO_DATE(:start_deadline, 'YYYY-MM-DD') AND TO_DATE(:deadline, 'YYYY-MM-DD')`)
-    }else{
-      restrictives.push(`${convertSQLDate()} ${features.deadline[0]} TO_DATE(:deadline, 'YYYY-MM-DD')`)
-    }
   }
   
   const preQuery = restrictives.length > 0 ? restrictives.join(' AND ') : "";

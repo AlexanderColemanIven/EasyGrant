@@ -1,25 +1,21 @@
 import React, { useState, useEffect } from "react";
+import moment from "moment";
+import dayjs from 'dayjs';
 import { Form, Input, Button, Alert, Layout, Menu, Dropdown, Table, message} from 'antd';
 import "./admin-page.css";
-import { Card, Empty } from 'antd';
+import { Modal, Card, Empty, DatePicker, Select, InputNumber, Tag } from 'antd';
 import {
-  EnvironmentOutlined, DollarCircleOutlined, CalendarOutlined,
-  TagsOutlined, UserOutlined, IdcardOutlined, LinkOutlined,
-  InfoCircleOutlined, CheckCircleOutlined,
+  DollarCircleOutlined, CalendarOutlined,
+  UserOutlined, IdcardOutlined,
 } from '@ant-design/icons';
+const { Option } = Select;
+const { Header, Content } = Layout;
 
-const { Header, Content, Sider } = Layout;
-function ExpandedGrantCard({ grant }) {
-  // Define the structure of your expanded grant card here
-  return (
-    <Card title={grant.name}>
-      <p>Amount: {grant.amount}</p>
-      <p>Deadline: {grant.deadline}</p>
-      {/* ... other grant details */}
-    </Card>
-  );
-}
+
 function AdminPage() {
+  const logout = () => {
+    setIsSubmitted(false);
+  };
   const [grants, setGrants] = useState([]);
   const [errorMessages, setErrorMessages] = useState({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -27,112 +23,25 @@ function AdminPage() {
   const [form] = Form.useForm();
   const [isViewing, setIsViewing] = useState(false);
   const [selectedGrant, setSelectedGrant] = useState(null);
+  const [popupData, setPopupData] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [expandedRowKeys, setExpandedRowKeys] = useState(new Set());
+  const [formValues, setFormValues] = useState({
+    NAME: '',
+    LOCATION: '',
+    LINK: '',
+    AMOUNT: '',
+    ABOUT: '',
+    FREE: '',
+    ELIGIBILITY: '',
+    DEADLINE: '',
+    ID: '',
+  });
+
+
   const errors = {
     uname: "Invalid username",
     pass: "Invalid password"
-  };
-  const handleDelete = async (grant) => {
-    try {
-      const response = await fetch(`/api/removeFromGrantQueue/${grant.id}`, {
-        method: 'DELETE',
-      });
-  
-      if (!response.ok) {
-        throw new Error('Network response failed.');
-      }
-  
-      const newGrants = grants.filter((g) => g.id !== grant.id);
-      setGrants(newGrants);
-      message.success('Grant deleted successfully!');
-    } catch (error) {
-      console.error('Fetch Error:', error);
-      message.error('Failed to delete the grant.');
-    }
-  };
-  const handleModify = () => {
-    // Placeholder for future implementation (baseed on discussion with team)
-  };
-  const columns = [
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-    },
-    
-    {
-      title: 'Amount',
-      dataIndex: 'amount',
-      key: 'amount',
-    },
-    {
-      title: 'Deadline',
-      dataIndex: 'deadline',
-      key: 'deadline',
-    },
-    {
-      title: 'Category',
-      dataIndex: 'category',
-      key: 'category',
-    },
-    {
-      title: 'Eligibility',
-      dataIndex: 'eligibility',
-      key: 'eligibility',
-    },
-    {
-      title: 'Date Submitted',
-      dataIndex: 'dateSubmitted',
-      key: 'dateSubmitted',
-      render: (date) => {
-        if (date) {
-          const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-          return new Date(date).toLocaleDateString('en-US', options);
-        }
-        return 'No deadline set';
-      },
-    },
-    {
-      title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (text, record) => (
-        <span>
-          { <button onClick={() => handleView(record)}>View</button> }
-          { <button onClick={() => handleModify(record)}>Modify</button> }
-          { <button onClick={() => handleDelete(record)}>Delete</button> }
-        </span>
-      ),
-    },
-  ];
-  const handleView = (grant) => {
-    setIsViewing(true);
-    setSelectedGrant(grant);
-  };
-  useEffect(() => {
-    const fetchGrants = async () => {
-      try {
-        const response = await fetch('/api/getGrantQueue');
-        if (!response.ok) {
-          throw new Error('HTTP error! status: ${response.status}');
-        }
-        const data = await response.json();
-        console.log("Grants data: ", data);  // Log grants data to the console
-        setGrants(data);
-    }
-      catch (error) {
-        console.error('Fetch Error:', error);
-      }
-    };
-  
-    fetchGrants();
-  }, []);
- 
-  const logout = () => {
-    setIsSubmitted(false);
   };
   const menu = (
     <Menu>
@@ -144,8 +53,399 @@ function AdminPage() {
       </Menu.Item>
     </Menu>
   );
+  const handleDelete = async (grant) => {
+    try {
+      const response = await fetch('/api/removeFromGrantQueue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: grant.ID }),
+      });
+      const body = await response.json();
+      setGrants(body);
+      message.success('Grant deleted successfully!');
+    } catch (error) {
+      console.error('Error during delete operation:', error);
+    }
+  };
+  const handleModify = async (grant) => {
+    try {
+      const response = await fetch('/api/getGrantByID', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: grant.ID }),
+      });
+
+      const body = await response.json();
+
+      const formattedDeadline = body.DEADLINE ? dayjs(body.DEADLINE).format('YYYY-MM-DD') : '';
+      console.log(body);
+      setPopupData(body); // Set the data for the popup
+      setFormValues({
+        NAME: body.NAME || '',
+        LOCATION: body.LOCATION || '',
+        LINK: body.LINK || '',
+        AMOUNT: body.AMOUNT || '',
+        ABOUT: body.ABOUT || '',
+        FREE: body.FREE || '',
+        ELIGIBILITY: body.ELIGIBILITY || '',
+        DEADLINE: formattedDeadline || '',
+        ID: body.ID || '',
+      });
+      setIsModalVisible(true); // Show the modal
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const handleModalCancel = () => {
+    setIsModalVisible(false); // Hide the modal
+    setSelectedGrant(null);
+  };
+
+  useEffect(() => {
+    if (!popupData) {
+      setIsModalVisible(false); // Hide the modal if there is no data
+    }
+  }, [popupData]);
+
+  useEffect(() => {
+    if (popupData) {
+      form.setFieldsValue({
+        NAME: popupData.NAME || '',
+        LOCATION: popupData.LOCATION || '',
+        LINK: popupData.LINK || '',
+        AMOUNT: popupData.AMOUNT ? parseInt(popupData.AMOUNT) : '',
+        ABOUT: popupData.ABOUT || '',
+        FREE: popupData.FREE || '',
+        ELIGIBILITY: popupData.ELIGIBILITY || '',
+        DEADLINE: popupData.DEADLINE || '',
+        ID: popupData.ID || '',
+      });
+    }
+  }, [popupData, form]);
+  
+
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues((prevValues) => ({
+      ...prevValues,
+      [name]: value,
+    }));
+  };
+
+  const handleDatePickerChange = (date, dateString, fieldName) => {
+    setFormValues({ ...formValues, [fieldName]: dateString });
+  };
+
+  const handleModifyFormSubmit = async (values) => {
+    const isDeadlineChanged =
+    values.DEADLINE && dayjs(values.DEADLINE).format() !== dayjs(formValues.DEADLINE).format();
+
+    // Include the 'deadline' field only if it has been changed
+    delete values.DEADLINE;
+    const deadlineToSubmit = isDeadlineChanged ? values.DEADLINE : formValues.DEADLINE;
+    values.DEADLINE = deadlineToSubmit;
+    values.ID = formValues.ID;
+    try {
+      const response = await fetch('/api/modifyGrantByID', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: values }),
+      });
+      const body = await response.json();
+      setGrants(body);
+      setIsModalVisible(false);
+      message.success('Grant modified successfully!');
+    } catch(e){
+      console.log("Error while modifying", e);
+    }
+    // Implement your form submission logic here
+    console.log('Form submitted:', values );
+  };
+
+  const renderModalContent = () => {
+    return (
+      <div>
+        {/* Form with pre-populated values */}
+        {popupData && (
+          <Form form={form} onFinish={handleModifyFormSubmit}>
+            <div>
+              <Form.Item
+                label="Title"
+                name="NAME"
+                rules={[{ required: true, message: 'Please enter the title' },
+                { max: 255, message: 'Title must be at most 255 characters' }]}
+              >
+                <Input value={formValues.NAME} onChange={handleInputChange} />
+              </Form.Item>
+            </div>
+            <div>
+              <Form.Item
+                label="Location"
+                name="LOCATION"
+                rules={[{ required: false, message: 'Please enter the location' },
+                { max: 255, message: 'Location must be at most 255 characters' }]}
+              >
+                <Input value={formValues.LOCATION} onChange={handleInputChange} />
+              </Form.Item>
+            </div>
+            <div>
+              <Form.Item
+                label="Link"
+                name="LINK"
+                rules={[{ required: true, message: 'Please enter the link' },
+                { max: 255, message: 'Link must be at most 255 characters' }]}
+              >
+                <Input value={formValues.LINK} onChange={handleInputChange} />
+              </Form.Item>
+            </div>
+            <div>
+            <Form.Item
+              label="Amount"
+              name="AMOUNT"
+              rules={[
+                { required: false, message: 'Please enter the amount' },
+                { type: 'number', message: 'Amount must be a number' },
+              ]}
+            >
+              <InputNumber
+                value={formValues.AMOUNT}
+                onChange={(value) => handleInputChange({ target: { name: 'AMOUNT', value } })}
+              />
+            </Form.Item>
+            </div>
+            <div>
+              <Form.Item
+                label="Description"
+                name="ABOUT"
+                rules={[{ required: false, message: 'Please enter the about information' },
+                  { max: 4000, message: 'Description must be at most 4000 characters'}]}
+              >
+                <Input value={formValues.ABOUT} onChange={handleInputChange} />
+              </Form.Item>
+            </div>
+            <Form.Item
+              label="Free"
+              name="FREE"
+              rules={[{ required: false, message: 'Please select the free information' }]}
+            >
+              <Select
+                value={formValues.FREE === null ? 'Unknown' : formValues.FREE}
+                onChange={(value) => handleInputChange({ target: { name: 'FREE', value } })}
+              >
+                <Option value="Y">Yes</Option>
+                <Option value="N">No</Option>
+                <Option value="">Unknown</Option>
+              </Select>
+            </Form.Item>
+            <div>
+            <Form.Item
+              label="Eligibility"
+              name="ELIGIBILITY"
+              rules={[{ required: false, message: 'Please enter the eligibility' }]}
+            >
+              <Select
+                mode="tags"
+                value={formValues.ELIGIBILITY}
+                onChange={(values) => handleInputChange({ target: { name: 'ELIGIBILITY', value: values } })}
+              >
+                {/* Render existing tags as Options */}
+                {formValues.ELIGIBILITY.map((tag) => (
+                  <Option key={tag}>{tag}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+            </div>
+            <div>
+              <Form.Item
+                label="Deadline"
+                name="deadline"
+                rules={[{ required: false, message: 'Please select a deadline' }]}
+              >
+                <DatePicker
+                  defaultValue={
+                    formValues.DEADLINE ? dayjs(formValues.DEADLINE) : undefined
+                  }
+                  onChange={(date, dateString) =>
+                    handleDatePickerChange(date, dateString, 'DEADLINE')
+                  }
+                  format="YYYY-MM-DD"
+                />
+              </Form.Item>
+            </div>
+            <Button type="primary" htmlType="submit">
+              Save
+            </Button>
+          </Form>
+        )}
+      </div>
+    );
+  };
+  
+
+  const handleAccept = async (grant) => {
+    try{
+      await fetch('/api/addToDatabase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(grant),
+      });
+      const response = await fetch('/api/removeFromGrantQueue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post: grant.ID }),
+      });
+      const body = await response.json();
+      setGrants(body);
+      message.success('Grant accepted successfully!');
+    }catch(e){
+      console.log("Error while moving grant")
+    }
+
+  }
+  
+  const columns = [
+    {
+      title: 'Title',
+      dataIndex: 'NAME',
+      key: 'name',
+      className: 'title-column',
+    },
+    
+    {
+      title: 'Amount',
+      dataIndex: 'AMOUNT',
+      key: 'amount',
+      className: 'amount-column',
+    },
+    {
+      title: 'Deadline',
+      dataIndex: 'DEADLINE',
+      key: 'deadline',
+      className: 'deadline-column',
+      render: (deadline) => {
+        // Format the date to show full month name, day, and full year
+        return deadline ? moment(deadline).format('DD MMMM YYYY') : 'No deadline set';
+      },
+    },
+    {
+      title: 'Eligibility',
+      dataIndex: 'ELIGIBILITY',
+      key: 'eligibility',
+      className: 'eligibility-column',
+      render: (eligibility) => {
+        return eligibility && eligibility.length > 0 ? eligibility.join(', ') : 'Not specified';
+      },
+    },
+    {
+      title: 'Date Submitted',
+      dataIndex: 'TIME',
+      key: 'dateSubmitted',
+      className: 'date-submitted-column',
+      render: (date) => {
+        return date ? moment(date).fromNow() : 'Time unavailable';
+      },
+    },
+    
+    {
+      title: 'Description',
+      dataIndex: 'ABOUT',
+      key: 'description',
+      className: 'description-column',
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      className: 'actions-column',
+      render: (text, record) => (
+        <span>
+          { <button onClick={() => handleView(record)}>All Info</button> }
+          { <button onClick={() => handleAccept(record)}>Accept</button> }
+          { <button onClick={() => handleModify(record)}>Modify</button> }
+          { <button onClick={() => handleDelete(record)}>Delete</button> }
+          {/* Modal */}
+          <Modal
+            title={popupData ? `Modifying Grant: ${popupData.NAME}` : 'Modifying Grant'}
+            open={isModalVisible}
+            onCancel={handleModalCancel}
+            footer={null} // No need for the default modal footer in this case
+          >
+            {renderModalContent()}
+          </Modal>
+        </span>
+      ),
+    },
+  ];
+
+  const handleView = (grant) => {
+    setIsViewing(true);
+    setSelectedGrant(grant);
+  };
+
+  const onRow = (record) => {
+    const isExpanded = expandedRowKeys.has(record.ID);
+  
+    return {
+      onClick: (event) => {
+        const isButtonClick = event.target.tagName === 'BUTTON';
+        if (!isModalVisible && !isButtonClick) {
+          handleRowClick(record);
+        }
+      },
+      className: isExpanded ? 'expanded-row' : '', // Add or remove the 'expanded-row' class
+    };
+  };
+  
+  const handleRowClick = (record) => {
+    setExpandedRowKeys((prevExpandedRowKeys) => {
+      const newExpandedRowKeys = new Set(prevExpandedRowKeys);
+  
+      if (newExpandedRowKeys.has(record.ID)) {
+        newExpandedRowKeys.delete(record.ID); // Remove if already expanded
+      } else {
+        newExpandedRowKeys.add(record.ID); // Add if not expanded
+      }
+  
+      return newExpandedRowKeys;
+    });
+  };
+  
+
+
+  const fetchGrants = async () => {
+    try {
+      const response = await fetch('/api/getGrantQueue',{
+        method: 'GET',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log("Grants data: ", data);  // Log grants data to the console
+      setGrants(data);
+    }
+    catch (error) {
+      console.error('Fetch Error:', error);
+    }
+  }
+
   const handleSubmit = async (values) => {
     const { uname, pass } = values;
+   
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
@@ -164,6 +464,7 @@ function AdminPage() {
         setIsSubmitted(true);
         setErrorMessages({});
         setLoggedInUser(uname);
+        await fetchGrants();
       } else {
         setErrorMessages({
           name: body.express.match_username ? "pass" : "uname",
@@ -175,35 +476,38 @@ function AdminPage() {
     }
   };
   const ExpandedGrantCard = ({ grant }) => {
+    const filteredGrant = Object.fromEntries(
+      Object.entries(grant).filter(([key]) => key !== 'ID' && key !== 'TIME')
+    );
+  
     return (
-      <Card
-        title={grant.name}
-        className="expanded-card"
-        style={{
-          width: '100%',
-          maxHeight: '100vh',
-          overflowY: 'auto',
-        }}
-      >
-        <div className="grant-field">
-          <span className="grant-field-icon"><IdcardOutlined /></span>
-          <span className="grant-field-name">Name</span>-<span className="grant-field-value">{grant.name}</span>
-        </div>
-        <div className="grant-field">
-          <span className="grant-field-icon"><DollarCircleOutlined /></span>
-          <span className="grant-field-name">Amount</span>-<span className="grant-field-value">{grant.amount}</span>
-        </div>
-        <div className="grant-field">
-          <span className="grant-field-icon"><CalendarOutlined /></span>
-          <span className="grant-field-name">Deadline</span>-<span className="grant-field-value">{new Date(grant.deadline).toLocaleDateString()}</span>
-        </div>
-        {/* ... (other fields) */}
-      </Card>
+      <div className="expanded-card">
+        {Object.entries(filteredGrant).map(([key, value]) => (
+          <div key={key}>
+            <span className="grant-field-name">{key}</span>:
+            {key === 'ELIGIBILITY' ? (
+              <div className="ellipsis-text">
+                {value.map((eligibility, index) => (
+                  <Tag key={index} className="tag">
+                    {eligibility}
+                  </Tag>
+                ))}
+              </div>
+            ) : (
+              <span className="grant-field-value ellipsis-text">{value}</span>
+            )}
+          </div>
+        ))}
+      </div>
     );
   };
   return (
     <div className="admin-page">
-      <a href="http://localhost:8080/" className="home-button">Homepage</a>
+      <header className="home-page-title">
+        <a href="/" className="logo" style={{ cursor: 'pointer', color: 'white', textDecoration: 'none' }}>
+          EasyGrants
+        </a>
+      </header>
       {isSubmitted ? (
         <Layout style={{ minHeight: '100vh', minWidth: '100vw' }}>
           <Header className="admin-header">
@@ -213,25 +517,27 @@ function AdminPage() {
                   {loggedInUser} <UserOutlined />
                 </a>
               </Dropdown>
-              <Button
-                type="link"
-                style={{ color: '#1890ff' }}
-                onClick={() => window.location.href = '/'}
-              >
+              <Button type="link" style={{ color: '#1890ff' }} onClick={() => window.location.href = '/'}>
                 Home
               </Button>
             </div>
           </Header>
           <Content className="admin-content">
-            {isViewing ? (
-              <div onClick={() => setIsViewing(false)}>
+            {isViewing && selectedGrant && (
+              <Modal
+                title={selectedGrant.NAME}
+                visible={isViewing}
+                onCancel={handleModalCancel}
+                footer={null}
+              >
                 <ExpandedGrantCard grant={selectedGrant} />
-              </div>
-            ) : grants.length > 0 ? (
-              <Table dataSource={grants} columns={columns} rowKey="id" />
+              </Modal>
+            )}
+            {grants.length > 0 ? (
+              <Table dataSource={grants} columns={columns} rowKey="id" onRow={onRow} />
             ) : (
               <Empty description="No user-submitted grants yet!" />
-              )}
+            )}
           </Content>
         </Layout>
       ) : (
