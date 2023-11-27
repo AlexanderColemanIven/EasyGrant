@@ -39,35 +39,11 @@ export const Grant = (props) => {
 
     // Reference to the grant container for click outside functionality
     const grantRef = useRef(null);
-    /*useEffect(() => {
-      const body = document.querySelector('body');
-      const overlay = document.querySelector('.overlay');
-    
-      if (isExpanded) {
-        body.style.overflow = 'hidden'; // Prevent scrolling
-        overlay.classList.add('active'); // Show the overlay
-      } else {
-        body.style.overflow = ''; // Re-enable scrolling
-        overlay.classList.remove('active'); // Hide the overlay
-      }
-    
-      // Clean up function to reset the styles when the component is unmounted or updated
-      return () => {
-        body.style.overflow = '';
-        overlay.classList.remove('active');
-      };
-    }, [isExpanded]); // Only re-run the effect if isExpanded changes
-    */
-    // Function to toggle the expanded state of the card
+   
+    // Function to toggle the expanded/collapsed state of the card
     const handleExpandCollapse = () => {
         const body = document.body;
-        setIsExpanded(!isExpanded);
-        // Toggle the 'no-scroll' class on the body
-        if (!isExpanded) {
-          body.classList.add('no-scroll');
-        } else {
-          body.classList.remove('no-scroll');
-      }
+        setIsExpanded(!isExpanded);        
     };
 
     // Use custom hook to handle click outside the card to collapse it
@@ -79,7 +55,7 @@ export const Grant = (props) => {
 
     return (
       // Main container for the grant card
-      <div data-testid="grant-container" ref={grantRef} className={`grant-container${isExpanded ? " expanded" : "collapsed"}`}>
+      <div data-testid="grant-container" ref={grantRef} className={`grant-card${isExpanded ? "grant-card--expanded" : "grant-card--collapsed"}`}>
         <Card
           // Handle card click to expand/collapse, avoid action if an anchor tag is clicked
           onClick={(e) => {
@@ -88,18 +64,13 @@ export const Grant = (props) => {
             }
           }}
           title={
-            <div className="grant-name-display">
+            <div className="grant-card__title">
             {props.grant.find(field => field[0] === FIELD_KEYS.NAME)[1]}
           </div>
           }
           // Extra contains the collapse/expand toggle
-          extra={<a onClick={handleExpandCollapse}>{isExpanded ? "Collapse" : "Expand"}</a>}
+          extra={<a onClick={handleExpandCollapse} className="grant-card__read-more">{isExpanded ? "Collapse" : "Expand"}</a>}
           // Dynamic styling based on expanded state
-          style={{
-            width: isExpanded ? "100%" : "300px",
-            maxHeight: isExpanded ? "100vh" : "300px",
-            overflowY: "auto",
-          }}
         >
           {/* Conditionally render the grant details if the card is expanded */}
           {isExpanded && (
@@ -110,7 +81,7 @@ export const Grant = (props) => {
         
                 // Generate the field display
                 return (
-                  <div key={index} className="expanded-card">
+                  <div key={index} className="grant-card__content">
                     <span className="grant-field-icon">{icon}</span>
                     <span className="grant-field-name">{object_key}: </span>
                     <span className="grant-field-value">{value}</span>
