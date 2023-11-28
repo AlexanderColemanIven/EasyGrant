@@ -45,8 +45,8 @@ class HomePage extends Component {
       const { post, responseToPost } = this.state;
       return (
         <div className="home-page-container"> {/* Updated container class */}
-          <header className="site-header">
-            <span className="site-logo" onClick={this.redirectToHome}>
+          <header className="home-site-header">
+            <span className="home-site-logo" onClick={this.redirectToHome}>
               EasyGrants
             </span>
             <div className="action-buttons"> {/* Updated class for action buttons */}
@@ -54,31 +54,31 @@ class HomePage extends Component {
               <Button>About Us</Button>
             </div>
           </header>
-          <div className="search-bar-container"> {/* Updated search container class */}
+          <div className="home-search-bar-container"> {/* Updated search container class */}
             <Search
-              className="search-input" 
+              className="home-search-input" 
               value={this.state.post}
               onChange={e => this.setState({ post: e.target.value })}
               placeholder="Enter keyword..."
               onSearch={this.handleSubmit}
               enterButton={
-                <Button className="search-button" icon={<SearchOutlined />}>Search</Button> 
+                <Button className="home-search-button" icon={<SearchOutlined />}>Search</Button> 
               }
             />
-            <div className="search-form-controls"> 
+            <div className="home-search-form-controls"> 
               <Select
-                className="search-form-control" 
+                /* className="home-search-form-control" */
                 onChange={selectedAmount => this.setState({ selectedAmount })}
                 placeholder="Select Amount Range"
               >
                 {/* ...options */}
               </Select>
               <DatePicker
-                className="search-form-control"
+                /* className="home-search-form-control" */
                 onChange={(date, dateString) => this.setState({ selectedDate: dateString })}
               />
               <Select
-                className="search-form-control" 
+                /* className="home-search-form-control" */
                 onChange={selectedEligibility => this.setState({ selectedEligibility })}
                 placeholder="Select Eligibility"
                 dropdownRender={menu => <div>{menu}</div>} // To handle custom dropdown visibility
@@ -88,15 +88,15 @@ class HomePage extends Component {
             </div>
           </div>
           {responseToPost.length > 0 && (
-            <div className="grants-list-header"> {/* Updated class for grants list header */}
-              <div className="grant-detail">Title</div>
-              <div className="grant-detail">Deadline</div>
-              <div className="grant-detail">Location</div>
-              <div className="grant-detail">Notes</div>
+            <div className="home-grant-header"> {/* Updated class for grants list header */}
+              <div className="home-grant-detail">Title</div>
+              <div className="home-grant-detail">Deadline</div>
+              <div className="home-grant-detail">Location</div>
+              <div className="home-grant-detail">Notes</div>
             </div>
           )}
           {responseToPost.map((obj, index) => (
-            <div className="grant-card-container" key={index}> {/* Updated class for grant card */}
+            <div className="home-grant-card-container" key={index}> {/* Updated class for grant card */}
               <Grant grant={obj} />
             </div>
           ))}

@@ -1,36 +1,92 @@
 .grant-card {
   /* General styles for the grant card */
-  border: 1px solid #d9d9d9;
+  border: 1px solid #ffffff;
   margin-bottom: 20px;
-  transition: max-height 0.3s ease;
+  transition: all 0.3s ease;
+  overflow: hidden; /* This ensures content outside of the max-height is not shown */
+  margin-left: 165px;
+  width: 80%;
+  margin: 0 auto;
 }
 
 .grant-card--collapsed {
   /* Specific styles for collapsed card */
-  max-height: 200px; /* Example max height */
-  overflow: hidden;
+  max-height: auto; /* Example max height */
+  background-color: rgba(142, 154, 12, 0.036);
 }
 
 .grant-card--expanded {
   /* Specific styles for expanded card */
-  max-height: 600px; /* Adjust based on content */
-  overflow-y: auto;
+  max-height: none; /* Adjust based on content */
+
+}
+
+.grant-card__header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* Adjust the number of columns as needed */
+  gap: 10px; /* Adjust spacing as needed */
+}
+
+.grant-card__title,
+.grant-card__deadline,
+.grant-card__location,
+.grant-card__about-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  grid-column: 1 / -1;
+  font: bold;
+
 }
 
 .grant-card__title {
-  /* Styles for the title inside the card */
-  font-size: 1.2em;
-  font-weight: bold;
+  grid-column: 1 / 2; /* Adjust grid column to match layout */
+  word-wrap: break-word;
+  font: bold;
 }
 
-.grant-card__content {
-  /* Styles for the content area */
-  padding: 10px;
+.grant-card__deadline {
+  grid-column: 2 / 3; /* Adjust grid column to match layout */
 }
 
-.grant-card__read-more {
-  /* Styles for the "Read More" button */
+.grant-card__location {
+  grid-column: 3 / 4; /* Adjust grid column to match layout */
+}
+
+.grant-card__about-preview {
+  grid-column: 4 / 5; /* Adjust grid column to match layout */
+  display: none; /* Hide in the header, show in the body */
+}
+
+.grant-card__about {
+  grid-column: 1 / -1; /* Span full width */
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Number of lines when truncated */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.grant-card__about--expanded {
   display: block;
-  margin: 10px 0;
-  text-align: center;
+}
+
+.grant-action-links {
+  grid-column: 1 / -1; /* Span full width */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .grant-card__header {
+    grid-template-columns: 1fr;
+  }
+  .grant-card__title,
+  .grant-card__deadline,
+  .grant-card__location,
+  .grant-card__about-preview {
+    grid-column: 1 / -1;
+  }
 }
