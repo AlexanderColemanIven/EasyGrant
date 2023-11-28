@@ -59,14 +59,13 @@ export const Grant = (props) => {
             <div className="grant-card__location">
               {props.grant.find(([key]) => key === FIELD_KEYS.LOCATION)[1]}
             </div>
-            <div className="grant-card__about-preview">
+            <div className={`grant-card__about ${isExpanded ? "grant-card__about--expanded" : ""}`}>
               {aboutFieldValue}
             </div>
           </div>
           <div className={`grant-card__about ${isExpanded ? "grant-card__about--expanded" : "grant-card__about--truncated"}`}>
             {aboutFieldValue}
           </div>
-          {/* Read More/Read Less toggle button */}
           <div className="grant-action-links">
             <button className="grant-card__read-more" onClick={handleExpandCollapse}>
               {isExpanded ? "Read Less" : "Read More"}
