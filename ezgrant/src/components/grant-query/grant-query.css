@@ -44,22 +44,25 @@
 }
 
 .grant-card__about {
-  grid-column: 4 / 5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3; /* Adjust number of lines to show before truncation */
+  grid-column: 4 / 5; 
+  white-space: normal;
+  word-wrap: break-word;
+  max-width: 100%;
+  transition: max-height 0.3s ease;
 }
 
-.grant-card__about--expanded,
 .grant-card__about--truncated {
-  grid-column: 1 / -1; /* Span full width */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1; /* Number of lines when truncated */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 4.5em; /* Adjust based on your line-height */
 }
 
 .grant-card__about--expanded {
   -webkit-line-clamp: none;
+  max-height: none;
   display: block;
 }
 
@@ -75,6 +78,8 @@
 @media (max-width: 768px) {
   .grant-card__header {
     grid-template-columns: 1fr;
+    display: grid;
+    grid-template-rows: auto auto auto auto; /* Each row for title, deadline, location, and about */
   }
 
   .grant-card__title,
@@ -82,5 +87,9 @@
   .grant-card__location,
   .grant-card__about {
     grid-column: 1 / -1;
+  }
+
+  .grant-card__about {
+    order: 4; /* Adjust the order as needed for mobile */
   }
 }

@@ -35,7 +35,6 @@ const FIELD_KEYS = {
 export const Grant = (props) => {
     // State to manage whether the card is expanded or not
     const [isExpanded, setIsExpanded] = useState(false);
-    const aboutFieldValue = props.grant.find(([key]) => key === FIELD_KEYS.ABOUT)[1];
 
     // Reference to the grant container for click outside functionality
     const grantRef = useRef(null);
@@ -59,12 +58,9 @@ export const Grant = (props) => {
             <div className="grant-card__location">
               {props.grant.find(([key]) => key === FIELD_KEYS.LOCATION)[1]}
             </div>
-            <div className={`grant-card__about ${isExpanded ? "grant-card__about--expanded" : ""}`}>
-              {aboutFieldValue}
-            </div>
           </div>
           <div className={`grant-card__about ${isExpanded ? "grant-card__about--expanded" : "grant-card__about--truncated"}`}>
-            {aboutFieldValue}
+            {props.grant.find(([key]) => key === FIELD_KEYS.ABOUT)[1]}
           </div>
           <div className="grant-action-links">
             <button className="grant-card__read-more" onClick={handleExpandCollapse}>
@@ -76,10 +72,4 @@ export const Grant = (props) => {
         </Card>
       </div>
     );
-    
-    
-    
-    
-    
-      
 };
