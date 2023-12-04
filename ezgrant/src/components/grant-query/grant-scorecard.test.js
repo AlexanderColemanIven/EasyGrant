@@ -24,9 +24,13 @@ describe('Testing Grant Scorecard', () => {
     expect(
       container.querySelector('.grant-containercollapsed .grant-name-display')
     ).toHaveTextContent('Test Grant');
-    const expandLink = screen.getByText("Expand");
+    const readMore = screen.getByText("Read More");
     act(() => {
-      fireEvent.click(expandLink);
+      fireEvent.click(readMore);
+    });
+    const readLess = screen.getByText("Read Less");
+    act(() => {
+      fireEvent.click(readLess);
     });
     // Use screen queries to make assertions
     expect(screen.getByText('Bucknell')).toBeInTheDocument();
@@ -48,13 +52,13 @@ describe('Testing Grant Scorecard', () => {
     expect(grantContainer).not.toHaveClass('expanded');
     
     // Click the Expand button
-    const expandLink = screen.getByText("Expand");
+    const readMore = screen.getByText("Read More");
     act(() => {
-      fireEvent.click(expandLink);
+      fireEvent.click(readMore);
     });
     await screen.findByTestId('grant-container', {}, { timeout: 2000 });
-    const expandedContent = screen.getByText("Collapse");
-    expect(expandedContent).toBeInTheDocument();
+    const expandedGrant = screen.getByText("Read Less");
+    expect(expandedGrant).toBeInTheDocument();
   });
 
 
@@ -66,14 +70,9 @@ describe('Testing Grant Scorecard', () => {
     // Initial state: should not have 'expanded' class
     expect(grantContainer).not.toHaveClass('expanded');
 
-    // Click somewhere on the Grant scorecard
-    const randomPoint = screen.getByText("Expand");
-    act(() => {
-      fireEvent.click(randomPoint);
-    });
     await screen.findByTestId('grant-container', {}, { timeout: 2000 });
-    const expandedContent = screen.getByText("Collapse");
-    expect(expandedContent).toBeInTheDocument();
+    const expandedGrant = screen.getByText("Read Less");
+    expect(expandedGrant).toBeInTheDocument();
   });
 
 });
