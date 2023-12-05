@@ -54,9 +54,8 @@ app.post('/api/database', async (req, res) => {
     connection = await oracledb.getConnection();
     // Extract features, generate SQL, and get binds
     const features = await qp.extractFeatures(req.body.post);
-    console.log(features);
     const sql = qp.generate_query(features);
-   const binds = qp.get_binds(features);
+    const binds = qp.get_binds(features);
     // Execute the SQL query
     const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
     const retval = await connection.execute(sql, binds, options);
@@ -585,4 +584,22 @@ function arrSimilarity(arr1, arr2) {
   const unionSize = set1.size + set2.size - intersectionSize;
 
   return unionSize > 0 ? (intersectionSize / unionSize): 0;
+}
+
+function parseCustomDate(dateString) {
+  const [year, month, day] = dateString.split('-').map(Number);
+
+  // Array of month names
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Convert month to name
+  const monthName = months[month - 1];
+
+  // Format the date
+  const formattedDate = `${monthName} ${day}, ${year}`;
+
+  return formattedDate;
 }

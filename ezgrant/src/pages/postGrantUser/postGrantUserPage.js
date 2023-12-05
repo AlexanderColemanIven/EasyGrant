@@ -13,7 +13,7 @@ const PostGrantPage = () => {
     // Log the form values
     const dateSubmitted = moment().format();
     values.DATESUBMITTED = dateSubmitted;
-    values.DEADLINE = values.DEADLINE ? values.DEADLINE.format("YYYY-MM-DD") : null;
+    values.DEADLINE = values.DEADLINE ? values.DEADLINE.format("MMMM D, YYYY") : null;
     
     try {
       const response = await fetch('/api/addToGrantQueue', {
@@ -64,7 +64,7 @@ const PostGrantPage = () => {
   const handleDatePickerChange = (date, fieldName) => {
     setFormValues((prevValues) => ({
       ...prevValues,
-      [fieldName]: date ? date.format('YYYY-MM-DD') : null,
+      [fieldName]: date ? date.format('MMMM D, YYYY') : null,
     }));
   };
 
@@ -178,7 +178,7 @@ const PostGrantPage = () => {
           >
             <DatePicker
               onChange={(date) => handleDatePickerChange(date, 'DEADLINE')}
-              format="YYYY-MM-DD"
+              format="MMMM D, YYYY"
             />
           </Form.Item>
         </div>

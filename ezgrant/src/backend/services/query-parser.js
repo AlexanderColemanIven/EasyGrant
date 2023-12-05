@@ -253,7 +253,7 @@ function get_binds(features){
 
     if(features.tags){
       features.tags.filter(tag => tag !== '').forEach((tag, idx) => {
-        binds[`tag${idx}`] = { dir: oracledb.BIND_IN, val: `${tag}`, type: oracledb.STRING }
+        binds[`tag${idx}`] = { dir: oracledb.BIND_IN, val: `%${tag}%`, type: oracledb.STRING }
       });
     }
     
