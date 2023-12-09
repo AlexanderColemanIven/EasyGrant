@@ -17,7 +17,7 @@ ENV PATH=$PATH:/usr/lib/oracle/12.2/client64/bin
 # Installing procps (for ps command)
 RUN yum install -y procps
 
-EXPOSE 80
+EXPOSE 8080
 EXPOSE 4000
 
 # Set the working directory 
