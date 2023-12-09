@@ -17,6 +17,9 @@ ENV PATH=$PATH:/usr/lib/oracle/12.2/client64/bin
 # Installing procps (for ps command)
 RUN yum install -y procps
 
+EXPOSE 8080
+EXPOSE 4000
+
 # Set the working directory 
 WORKDIR /app
 # Copy package.json to leverage Docker cache
@@ -36,9 +39,5 @@ ADD . /app/
 COPY build-resource/wallet/* /usr/lib/oracle/19.3/client64/lib/network/admin/
 ENV TNS_ADMIN=/usr/lib/oracle/19.3/client64/lib/network/admin/
 ENV ORACLEDB_TRACE=true
-
-
-EXPOSE 8080
-EXPOSE 4000
 
 ENTRYPOINT ["nodemon", "--exec", "npm", "start"]
