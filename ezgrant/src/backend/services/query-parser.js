@@ -213,7 +213,7 @@ async function extractFeatures(input) {
   doc_query = nlp(input);
 
   // Extract potential tags like Dancer, doesnt matter if tags dont make sense, they dont all have to match
-  features.tags = doc_query.match('#Noun #Noun? or? and?').text().split(/\s+/).filter(function(word) {
+  features.tags = doc_query.match('#Adjective? #Noun? #Verb? or? and?').text().split(/\s+/).filter(function(word) {
     return word !== "and" && word !== "or" && !nlp(word).places().text() && !nlp(word).match('#Date').text();
   });
   features.leftoverMatchers = generateSubstrings(doc_query.text());
@@ -250,6 +250,13 @@ function get_binds(features){
       accumulator[key] = currentObject[key];
       return accumulator;
     }, {});
+
+    if(features.tags){
+      features.tags.filter(tag => tag !== '').forEach((tag, idx) => {
+        binds[`tag${idx}`] = { dir: oracledb.BIND_IN, val: `%${tag}%`, type: oracledb.STRING }
+      });
+    }
+    
 
     if(features.amount){
       const regex = /([><=]+)\s*([\d.]+)/;
@@ -331,6 +338,26 @@ function generate_query(features){
   }
   else if (features.location){
     restrictives.push(`UPPER(LOCATION) LIKE :location`);
+  } 
+
+  if(features.tags[0] !== ''){ // I promise its not worth understanding why this equivalency is needed
+    const tagSQL = features.tags
+  .filter(tag => tag !== '')
+  .map((tag, index) => `
+  UPPER(COLUMN_VALUE) LIKE :tag${index}
+  `
+  )
+  .join(' OR ');
+
+restrictives.push(`
+  (
+    EXISTS (
+      SELECT 1
+      FROM TABLE(CAST(ELIGIBILITY AS POSTSVC.ELIGIBLE_LIST)) el
+      WHERE ${tagSQL}
+    )
+  )
+`);
   }
   
   const preQuery = restrictives.length > 0 ? restrictives.join(' AND ') : "";
@@ -350,12 +377,27 @@ function generate_query(features){
       return inflectional(column, idx);
     }).join(conditional_or());
   }).join('') + ')' : '';
+
+  const sortCondition = `
+ORDER BY
+  CASE
+    WHEN DEADLINE IS NOT NULL AND TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') >= SYSDATE
+      THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+    ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+  END NULLS LAST,
+  ABS(
+    CASE
+      WHEN DEADLINE IS NOT NULL THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+      ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+    END
+  ) NULLS LAST`;
+
   if(preQuery && !sqlConditions){
-    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${preQuery}`;
+    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${preQuery} ${sortCondition}`;
     return sqlStatement;
   }
   if(!preQuery && sqlConditions){
-    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${sqlConditions}`;
+    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${sqlConditions} ${sortCondition}`;
     return sqlStatement;
   }
   if(!preQuery && !sqlConditions){
@@ -363,7 +405,7 @@ function generate_query(features){
     return sqlStatement;
   }
   
-  const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${preQuery} OR ${sqlConditions}`;
+  const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${preQuery} OR ${sqlConditions} ${sortCondition}`;
   return sqlStatement;
   
 }

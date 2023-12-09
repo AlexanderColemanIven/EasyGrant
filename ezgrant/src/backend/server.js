@@ -59,6 +59,21 @@ app.post('/api/database', async (req, res) => {
     // Execute the SQL query
     const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
     const retval = await connection.execute(sql, binds, options);
+    /*
+    retval.rows.sort((a, b) => {
+      const scoreA = calculateSimilarity(a, features);
+      const scoreB = calculateSimilarity(b, features);
+
+      // Compare scores for sorting
+      if (scoreB !== scoreA) {
+          return scoreB - scoreA; // Sort by custom score
+      }
+      // If scores are equal, perform secondary sort based on AMOUNT
+      return parseInt(b.AMOUNT) - parseInt(a.AMOUNT);
+      
+  });
+  */
+
     // Log the result and send the response
     res.send({ express: retval.rows });
     //await dbConnect.close();
@@ -364,4 +379,227 @@ function gracefulShutdown (signal) {
     setTimeout(() => process.exit(1), 500)
   }
 
+}
+
+function calculateScore(row, features) {
+  let score = 0;
+
+  // Preprocess location values
+  const location = row.LOCATION ? row.LOCATION.toLowerCase() : '';
+  const featuresLocation = features.location.toLowerCase();
+  const stateMapping = stateMappings[features.location.toUpperCase()];
+
+  if (location) {
+    if (location === featuresLocation) {
+      score += 2;
+      return score;
+    } else if (location.includes(featuresLocation) || location.includes(stateMapping)) {
+      score += 1;
+    }
+
+    if (features.leftoverMatchers.some(tag => location.includes(tag.toUpperCase()))) {
+      score += 1;
+    }
+  }
+
+  if (!row.ELIGIBILITY) {
+    return score;
+  }
+
+  // Check if eligibility exists before executing regex
+  const eligibilityArray = [];
+  const regex = /'([^']+)'|(\w+)/g;
+
+  let match;
+  while ((match = regex.exec(row.ELIGIBILITY)) !== null) {
+    const value = (match[1] || match[2])?.toUpperCase();
+    if (value) {
+      eligibilityArray.push(value);
+    }
+  }
+
+  // Use sets for faster lookup
+  const tagsSet = new Set(features.tags);
+  const leftoverMatchersSet = new Set(features.leftoverMatchers);
+
+  // Increase score for matching tags with eligibility
+  for (const eligibilityTag of eligibilityArray) {
+    if (tagsSet.has(eligibilityTag)) {
+      score += 1;
+    }
+    if (leftoverMatchersSet.has(eligibilityTag)) {
+      score += 1;
+    }
+  }
+
+  return score;
+}
+
+const stateMappings = {
+  'ALABAMA': 'AL',
+  'ALASKA': 'AK',
+  'ARIZONA': 'AZ',
+  'ARKANSAS': 'AR',
+  'CALIFORNIA': 'CA',
+  'COLORADO': 'CO',
+  'CONNECTICUT': 'CT',
+  'DELAWARE': 'DE',
+  'FLORIDA': 'FL',
+  'GEORGIA': 'GA',
+  'HAWAII': 'HI',
+  'IDAHO': 'ID',
+  'ILLINOIS': 'IL',
+  'INDIANA': 'IN',
+  'IOWA': 'IA',
+  'KANSAS': 'KS',
+  'KENTUCKY': 'KY',
+  'LOUISIANA': 'LA',
+  'MAINE': 'ME',
+  'MARYLAND': 'MD',
+  'MASSACHUSETTS': 'MA',
+  'MICHIGAN': 'MI',
+  'MINNESOTA': 'MN',
+  'MISSISSIPPI': 'MS',
+  'MISSOURI': 'MO',
+  'MONTANA': 'MT',
+  'NEBRASKA': 'NE',
+  'NEVADA': 'NV',
+  'NEW HAMPSHIRE': 'NH',
+  'NEW JERSEY': 'NJ',
+  'NEW MEXICO': 'NM',
+  'NEW YORK': 'NY',
+  'NORTH CAROLINA': 'NC',
+  'NORTH DAKOTA': 'ND',
+  'OHIO': 'OH',
+  'OKLAHOMA': 'OK',
+  'OREGON': 'OR',
+  'PENNSYLVANIA': 'PA',
+  'RHODE ISLAND': 'RI',
+  'SOUTH CAROLINA': 'SC',
+  'SOUTH DAKOTA': 'SD',
+  'TENNESSEE': 'TN',
+  'TEXAS': 'TX',
+  'UTAH': 'UT',
+  'VERMONT': 'VT',
+  'VIRGINIA': 'VA',
+  'WASHINGTON': 'WA',
+  'WEST VIRGINIA': 'WV',
+  'WISCONSIN': 'WI',
+  'WYOMING': 'WY'
+};
+
+function calculateSimilarity(row, features) {
+  // Define weights for each feature
+  const weights = {
+    location: 2,
+    tags: 1,
+    leftovers: 1,
+    amount: 1,
+    // Add more features and weights as needed
+  };
+
+  const featureMapping = {
+    location: 'LOCATION',
+    tags: 'ELIGIBILITY',
+    amount: 'AMOUNT'
+  }
+
+  let totalWeight = 0;
+  let totalScore = 0;
+
+  // Calculate similarity for each feature and aggregate the total score
+  for (const feature in weights) {
+    const weight = weights[feature];
+    totalWeight += weight;
+
+    if (features.hasOwnProperty(feature) && row.hasOwnProperty(featureMapping[feature])) {
+      if(featureMapping[feature] === 'ELIGIBILITY'){
+        const eligibilityArray = [];
+        const regex = /'([^']+)'|(\w+)/g;
+
+        let match;
+        while ((match = regex.exec(row.ELIGIBILITY)) !== null) {
+          const value = (match[1] || match[2])?.toUpperCase();
+          if (value) {
+            eligibilityArray.push(value);
+          }
+        }
+        const featureScore = calculateFeatureSimilarity(features[feature].concat(features.leftoverMatchers), eligibilityArray);
+        totalScore += weight * featureScore;
+      }else{
+        const featureScore = calculateFeatureSimilarity(features[feature], row[featureMapping[feature]]);
+        totalScore += weight * featureScore;
+      }
+    }
+  }
+
+  // Normalize the total score by the total weight
+  const similarityScore = totalScore / totalWeight;
+  //console.log(similarityScore, "for:", row.NAME);
+  return similarityScore;
+}
+
+function calculateFeatureSimilarity(featureA, featureB) {
+  // Implement similarity calculation for each feature type
+  // For example, for strings, you might use Jaccard similarity or other string similarity metrics
+  // For numeric values, you might use a normalized difference or other appropriate metric
+
+  // Placeholder implementation - replace with appropriate similarity calculation
+  if (typeof featureA === 'string' && typeof featureB === 'string') {
+    return 0;
+  } else if (typeof featureA === 'number' && typeof featureB === 'number') {
+    return numericSimilarity(featureA, featureB);
+  } else if (Array.isArray(featureA) && Array.isArray(featureB)){
+    return arrSimilarity(featureA, featureB);
+  } else {
+    // Handle other types of features as needed
+    return 0;
+  }
+}
+
+// Example string similarity function (replace with an appropriate implementation)
+function stringSimilarity(strA, strB) {
+  // Jaccard similarity for strings
+  const setA = new Set(strA.split(''));
+  const setB = new Set(strB.split(''));
+
+  const intersection = new Set([...setA].filter(x => setB.has(x)));
+  const union = new Set([...setA, ...setB]);
+
+  return intersection.size / union.size;
+}
+
+function numericSimilarity(numA, numB) {
+  // Example: Normalized difference for numeric values
+  const range = Math.max(numA, numB) - Math.min(numA, numB);
+  return range > 0 ? 1 / range : 1;
+}
+
+function arrSimilarity(arr1, arr2) {
+  // Using Jaccard similiarity coeff
+  const set1 = new Set(arr1.map(item => item.toLowerCase()));
+  const set2 = new Set(arr2.map(item => item.toLowerCase()));
+
+  const intersectionSize = [...set1].filter(item => set2.has(item)).length;
+  const unionSize = set1.size + set2.size - intersectionSize;
+
+  return unionSize > 0 ? (intersectionSize / unionSize): 0;
+}
+
+function parseCustomDate(dateString) {
+  const [year, month, day] = dateString.split('-').map(Number);
+
+  // Array of month names
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Convert month to name
+  const monthName = months[month - 1];
+
+  // Format the date
+  const formattedDate = `${monthName} ${day}, ${year}`;
+
+  return formattedDate;
 }

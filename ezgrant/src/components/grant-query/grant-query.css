@@ -1,110 +1,96 @@
-
-.display-box {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 10px; /* Adjust the gap between the cards */
-  margin-left: -3px;
-}
-/* Additional styles for Card component */
-/* Styles for the grant container when it is not expanded */
-.grant-container {
-  flex: 0 0 calc(16.66% - 10px); /* Adjust the width for 6 items per row, subtracting the gap */
-  /* width: calc((100% - 60px) / 6); */ /* Assuming 10px gap, adjust if different */
-  margin-top: 1px; /* Adds margin to the top */
-  padding-left: 6px; /* Adds padding on the left */
-  border-radius: 8px; /* Rounded corners for a modern look */
-  cursor: pointer; /* Indicate it can be clicked */
-  margin-left: 3px;
-  height: 100px;
+.grant-card {
+  border: 1px solid #ffffff;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  margin: 0 auto;
+  width: 80%;
+  background-color: rgba(142, 154, 12, 0.036);
 }
 
-.grant-container.collapsed {
-  cursor: pointer; /* Indicate it can be clicked */
-  margin-bottom: 0px;
-}
-/* alters fields in expanded grant component*/
-.expanded-card {
-  margin-bottom: 2rem;
-  /* Add additional styles for the expanded state */
-}
-/* expanded grant container's fields */
-.grant-container.expanded {
-  width: 94%;
-  position: fixed;
-  top: 52px; /* don't change this value */
-  margin-right: 50px;
-  right: 0;
-  bottom: 100px;
-  z-index: 9999;
-  max-height: 100vh;
-  min-height: 80vh;
-  margin-bottom: 5px;
+.grant-card--collapsed {
+  max-height: auto;
 }
 
-/* grant name display for both expanded and collapsed */
-.grant-name-display {
-  padding: 10px;
-  font-weight: bold; /* Make the text bold */
-  text-align: center; /* Center the text */
-  font-size: 1.5rem; /* Larger font size */
-  display: block; 
-  border-radius: 8px; /* Rounded corners for a modern look */
-  cursor: pointer; /* Indicate it can be clicked */
-}
-/* expanded grant field alterations */
-.grant-container.expanded .ant-card-body {
-  font-size: 1.5rem;
-  margin-top: 10px;
-  margin-bottom: 5rem;
-  margin-left: 50px;
+.grant-card--expanded {
+  max-height: none;
 }
 
-/* Makes the field name bold */
-.grant-field-name {
+.grant-card__header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
   font-weight: bold;
 }
 
-/* Adds margin to action links */
-.grant-action-links {
-  margin-top: -15px;
+.grant-card__title {
+  grid-column: 1 / 2;
+  white-space: normal; /* Allows text to wrap */
+  word-wrap: break-word;
+  max-width: 100%; /* Adjust as needed */
 }
 
-/* Styles for the "Apply" and "Learn More" links */
-.grant-apply-link{
-  margin-right: 15px; /* Adds margin to the right */
-  font-weight: bold; /* Makes text bold */
-}
-
-.grant-about-link{
-  margin-right: 15px; /* Adds margin to the right */
-  font-weight: bold; /* Makes text bold */
-}
-
-
-/* Adds margin to the right of the field icon */
-.grant-field-icon {
-  margin-right: 5px;
-}
-
-.no-scroll {
+.grant-card__deadline {
+  grid-column: 2 / 3;
+  white-space: nowrap;
   overflow: hidden;
-  width: 100%;
+  text-overflow: ellipsis;
 }
 
-/* Overlay styles */
-.overlay {
-  display: none; /* Hidden by default */
-  position: fixed; /* Cover the entire viewport */
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
-  z-index: 9998; /* Ensure it's below the expanded card but above other content */
+.grant-card__location {
+  grid-column: 3 / 4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* When the overlay is active */
-.overlay.active {
-  display: block; /* Show the overlay */
+.grant-card__about {
+  grid-column: 4 / 5; 
+  white-space: normal;
+  word-wrap: break-word;
+  max-width: 100%;
+  transition: max-height 0.3s ease;
+  font-weight: normal;
+}
+
+.grant-card__about--truncated {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1; /* Number of lines when truncated */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 4.5em; /* Adjust based on your line-height */
+}
+
+.grant-card__about--expanded {
+  -webkit-line-clamp: none;
+  max-height: none;
+  display: block;
+}
+
+.grant-action-links {
+  grid-column: 1 / -1; /* Span full width */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .grant-card__header {
+    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-rows: auto auto auto auto; /* Each row for title, deadline, location, and about */
+  }
+
+  .grant-card__title,
+  .grant-card__deadline,
+  .grant-card__location,
+  .grant-card__about {
+    grid-column: 1 / -1;
+  }
+
+  .grant-card__about {
+    order: 4; /* Adjust the order as needed for mobile */
+  }
 }
