@@ -439,9 +439,11 @@ app.post('/api/removeFromGrantQueue/', async (req, res) => {
   let connection;
   try{
     connection = await oracledb.getConnection();
-    const id = req.body.post;
+    const mode = req.body.post[0];
+    const id = req.body.post[1];
+    const db = mode === 'userQueue' ? 'USERSUBMITTEDGRANTS' : 'GRANTOPPORTUNITIES';
 
-    const sql = `DELETE FROM USERSUBMITTEDGRANTS WHERE ID = :id`;
+    const sql = `DELETE FROM ${db} WHERE ID = :id`;
 
     const binds = {
       id: id
@@ -451,7 +453,18 @@ app.post('/api/removeFromGrantQueue/', async (req, res) => {
     
     const del = await connection.execute(sql, binds, { autoCommit: true });
 
-    const fetchSql = `SELECT * FROM USERSUBMITTEDGRANTS`;
+    const fetchSql = mode === 'userQueue' ? `SELECT * FROM ${db} ORDER BY TO_TIMESTAMP_TZ(TIME, 'YYYY-MM-DD"T"HH24:MI:SS-TZH:TZM') ASC` : `SELECT * FROM ${db} ORDER BY
+    CASE
+      WHEN DEADLINE IS NOT NULL AND TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') >= SYSDATE
+        THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+      ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+    END NULLS LAST,
+    ABS(
+      CASE
+        WHEN DEADLINE IS NOT NULL THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+        ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+      END
+    ) NULLS LAST`;
     const grants = await connection.execute(fetchSql, [], options);
     res.json(grants.rows);
   } catch (error) {

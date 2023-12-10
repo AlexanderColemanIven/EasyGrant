@@ -52,14 +52,14 @@ function AdminPage() {
       </Menu.Item>
     </Menu>
   );
-  const handleDelete = async (grant) => {
+  const handleDelete = async (grant, mode) => {
     try {
       const response = await fetch('/api/removeFromGrantQueue', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ post: grant.ID }),
+        body: JSON.stringify({ post: [mode, grant.ID] }),
       });
       const body = await response.json();
       setGrants(body);
@@ -289,7 +289,7 @@ function AdminPage() {
   };
   
 
-  const handleAccept = async (grant) => {
+  const handleAccept = async (grant, mode) => {
     try{
       await fetch('/api/addToDatabase', {
         method: 'POST',
@@ -303,7 +303,7 @@ function AdminPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ post: grant.ID }),
+        body: JSON.stringify({ post: [mode, grant.ID] }),
       });
       const body = await response.json();
       setGrants(body);
@@ -374,9 +374,9 @@ function AdminPage() {
       render: (text, record) => (
         <span>
           { <button onClick={() => handleView(record)}>All Info</button> }
-          { mode === "userQueue" && <button onClick={() => handleAccept(record)}>Accept</button> }
+          { mode === "userQueue" && <button onClick={() => handleAccept(record, mode)}>Accept</button> }
           { <button onClick={() => handleModify(record, mode)}>Modify</button> }
-          { <button onClick={() => handleDelete(record)}>Delete</button> }
+          { <button onClick={() => handleDelete(record, mode)}>Delete</button> }
           {/* Modal */}
           <Modal
             title={popupData ? `Modifying Grant: ${popupData.NAME}` : 'Modifying Grant'}
