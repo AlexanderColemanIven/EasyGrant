@@ -10,6 +10,8 @@ const oracledb = require('oracledb');
 const dbConfig = require('dbconfig');
 const { connect } = require('http2');
 
+const columns = 'NAME, LOCATION, LINK, AMOUNT, ABOUT, FREE, ELIGIBILITY, DEADLINE'
+
 if (process.env.NODE_ORACLEDB_DRIVER_MODE === 'thick') {
 
   //Thick mode is apparently req here to utilize a TNS connection (including both OS's for group)
@@ -53,7 +55,7 @@ app.post('/api/database', async (req, res) => {
   try {
     connection = await oracledb.getConnection();
     if(req.body.post === ''){
-      const sql = `SELECT * FROM GRANTOPPORTUNITIES ORDER BY
+      const sql = `SELECT ${columns} FROM GRANTOPPORTUNITIES ORDER BY
       CASE
         WHEN DEADLINE IS NOT NULL AND TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') >= SYSDATE
           THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
@@ -250,7 +252,7 @@ app.get('/api/getMainGrantQueue', async (req, res) => {
   let connection;
   try {
     connection = await oracledb.getConnection();
-    const sql = `SELECT * FROM GRANTOPPORTUNITIES ORDER BY
+    const sql = `SELECT ${columns} FROM GRANTOPPORTUNITIES ORDER BY
     CASE
       WHEN DEADLINE IS NOT NULL AND TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') >= SYSDATE
         THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE

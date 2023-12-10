@@ -77,19 +77,22 @@ async function scrapeCreative(pageNumber) {
 
                     // Iterate over each item in the list and extract the text
                     listContainer.find(`.${LISTITEM} .${SUBLISTITEM}`).each((index, element) => {
-                        const title = $(element).find(`.${TITLE} .font_0 .wixui-rich-text__text`).text();
+                        const title = $(element).find(`.${TITLE} .font_0 .wixui-rich-text__text`).first().text();
                         const deadline = $(element).find(`.${DEADLINE} h2`).text();
                         const location = $(element).find(`.${LOCATION} h2`).text();
-                        const about = $(element).find(`.${ABOUT} .${ABOUTEXPAND}`).text().replace(/\+/g, ' ').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                        const about = $(element).find(`.${ABOUT} .${ABOUTEXPAND}`).first().text().replace(/\+/g, ' ').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
                         const linkContainer = $(element).find(`.${LINK}`);
                         const link = linkContainer.find('a').attr('href');
-
+                        const eligibility = findEligibility(about);
+                        const amount = findAmount(about);
                         const grantObject = {
                             title: title,
                             deadline: deadline,
                             location: location,
+                            amount: amount,
                             about: about,
-                            link: link
+                            link: link,
+                            eligibility: eligibility
                         };
 
                         if (!grantObject.title.includes('Heading')) {
@@ -106,3 +109,97 @@ async function scrapeCreative(pageNumber) {
     });
 }
 module.exports.scrapeCreative = scrapeCreative;
+
+
+function findEligibility(inputString) {
+    const eligibilitySet = new Set();
+  
+    // Create a regular expression pattern to match any of the arts categories
+    const regexPattern = new RegExp(artsCategories.join('|'), 'gi');
+  
+    // Use RegExp#exec to find matches and add them to eligibilitySet
+    let match;
+    while ((match = regexPattern.exec(inputString)) !== null) {
+      const matchedCategory = match[0].toLowerCase(); // Convert to lowercase for case-insensitive comparison
+      eligibilitySet.add(matchedCategory);
+    }
+  
+    // Convert Set to array before returning
+    const eligibility = Array.from(eligibilitySet);
+  
+    return eligibility;
+}
+
+function findAmount(inputString) {
+    const regexPattern = /\$([0-9,.]+)/;
+    const match = regexPattern.exec(inputString);
+  
+    if (match && match[1]) {
+      // Extracted amount may contain commas, remove them and parse as a number
+      const amountWithoutCommas = match[1].replace(/,/g, '');
+      return parseFloat(amountWithoutCommas);
+    }
+  
+    return null; // Return null if no match is found
+}
+
+const artsCategories = [
+"Artists",
+"Drawing",
+"Interdisciplinary Arts",
+"Mixed Media",
+"Painting",
+"Printmaking",
+"Sculpture",
+"Visual Arts",
+"Book Arts",
+"Costume/Fashion Design",
+"Digital Fabrication",
+"Fine Metals/Jewelry",
+"Glass Arts",
+"Installation Arts",
+"Paper Arts",
+"Textile & Fiber Arts/Weaving",
+"Woodworking",
+"Fiction",
+"Journalism",
+"Literary Nonfiction",
+"Literature",
+"New Genres",
+"Nonfiction",
+"Playwriting",
+"Poetry",
+"Screenwriting",
+"Writing",
+"Acting",
+"Choreography",
+"Dance",
+"Performance Art",
+"Theater",
+"Music",
+"Opera",
+"Symphony",
+"Animation",
+"Digital Media",
+"Documentary",
+"Electronic Arts",
+"Film",
+"Moving Image",
+"Multimedia Arts",
+"Photography",
+"Sound Art",
+"TV + Radio",
+"Graphic Design",
+"Illustration",
+"Industrial Design",
+"Architecture",
+"Environmental Arts",
+"Landscape Architecture",
+"Public Art",
+"Social Practice",
+"Storytelling",
+"Urban Planning/Design",
+"Art Conservation",
+"Art Education",
+"Art History",
+];

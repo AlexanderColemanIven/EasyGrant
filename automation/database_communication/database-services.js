@@ -55,8 +55,8 @@ async function insertGrantOpportunity(newEntry) {
         DECLARE
           eligibility_list ELIGIBLE_LIST := ELIGIBLE_LIST(${eligibilityArray});
         BEGIN
-          INSERT INTO GRANTOPPORTUNITIES (NAME, LOCATION, LINK, AMOUNT, ABOUT, FREE, ELIGIBILITY, DEADLINE)
-          VALUES (:name, :location, :link, :amount, :about, :free, eligibility_list, :deadline);
+          INSERT INTO GRANTOPPORTUNITIES (NAME, LOCATION, LINK, AMOUNT, ABOUT, FREE, ELIGIBILITY, DEADLINE, ID)
+          VALUES (:name, :location, :link, :amount, :about, :free, eligibility_list, :deadline, :id);
         EXCEPTION
           WHEN DUP_VAL_ON_INDEX THEN
             NULL; -- Ignore duplicate entry error
@@ -71,7 +71,8 @@ async function insertGrantOpportunity(newEntry) {
         amount: newEntry.amount,
         about: newEntry.about,
         free: newEntry.free,
-        deadline: newEntry.deadline
+        deadline: newEntry.deadline,
+        id: newEntry.id
       };
   
       // Execute the PL/SQL block
