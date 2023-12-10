@@ -3,11 +3,9 @@ import moment from "moment";
 import dayjs from 'dayjs';
 import { Form, Input, Button, Alert, Layout, Menu, Dropdown, Table, message} from 'antd';
 import "./admin-page.css";
-import { Modal, Card, Empty, DatePicker, Select, InputNumber, Tag } from 'antd';
-import {
-  DollarCircleOutlined, CalendarOutlined,
-  UserOutlined, IdcardOutlined,
-} from '@ant-design/icons';
+import { Modal, Empty, DatePicker, Select, InputNumber, Tag } from 'antd';
+import { Switch } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 const { Option } = Select;
 const { Header, Content } = Layout;
 
@@ -25,6 +23,7 @@ function AdminPage() {
   const [selectedGrant, setSelectedGrant] = useState(null);
   const [popupData, setPopupData] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [mode, setMode] = useState("userQueue");
   const [expandedRowKeys, setExpandedRowKeys] = useState(new Set());
   const [formValues, setFormValues] = useState({
     NAME: '',
@@ -69,14 +68,14 @@ function AdminPage() {
       console.error('Error during delete operation:', error);
     }
   };
-  const handleModify = async (grant) => {
+  const handleModify = async (grant, mode) => {
     try {
       const response = await fetch('/api/getGrantByID', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ post: grant.ID }),
+        body: JSON.stringify({ post: [mode, grant.ID] }),
       });
 
       const body = await response.json();
@@ -157,7 +156,7 @@ function AdminPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ post: values }),
+        body: JSON.stringify({ post: [mode, values] }),
       });
       const body = await response.json();
       setGrants(body);
@@ -348,15 +347,19 @@ function AdminPage() {
         return eligibility && eligibility.length > 0 ? eligibility.join(', ') : 'Not specified';
       },
     },
-    {
-      title: 'Date Submitted',
-      dataIndex: 'TIME',
-      key: 'dateSubmitted',
-      className: 'date-submitted-column',
-      render: (date) => {
-        return date ? moment(date).fromNow() : 'Time unavailable';
-      },
-    },
+    ...(mode === "userQueue"
+    ? [
+        {
+          title: 'Date Submitted',
+          dataIndex: 'TIME',
+          key: 'dateSubmitted',
+          className: 'date-submitted-column',
+          render: (date) => {
+            return date ? moment(date).fromNow() : 'Time unavailable';
+          },
+        },
+      ]
+    : []),
     
     {
       title: 'Description',
@@ -371,8 +374,8 @@ function AdminPage() {
       render: (text, record) => (
         <span>
           { <button onClick={() => handleView(record)}>All Info</button> }
-          { <button onClick={() => handleAccept(record)}>Accept</button> }
-          { <button onClick={() => handleModify(record)}>Modify</button> }
+          { mode === "userQueue" && <button onClick={() => handleAccept(record)}>Accept</button> }
+          { <button onClick={() => handleModify(record, mode)}>Modify</button> }
           { <button onClick={() => handleDelete(record)}>Delete</button> }
           {/* Modal */}
           <Modal
@@ -423,25 +426,25 @@ function AdminPage() {
   
 
 
-  const fetchGrants = async () => {
+  const fetchGrants = async ( currentMode ) => {
     try {
-      const response = await fetch('/api/getGrantQueue',{
+      const response = await fetch(currentMode === "userQueue" ? '/api/getGrantQueue' : '/api/getMainGrantQueueWithID', {
         method: 'GET',
         headers: {
-        'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
         },
       });
+  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("Grants data: ", data);  // Log grants data to the console
-      setGrants(data);
-    }
-    catch (error) {
+      console.log("Grants data: ", data);
+      setGrants(currentMode === "userQueue" ? data : data.express);
+    } catch (error) {
       console.error('Fetch Error:', error);
     }
-  }
+  };
 
   const handleSubmit = async (values) => {
     const { uname, pass } = values;
@@ -464,7 +467,7 @@ function AdminPage() {
         setIsSubmitted(true);
         setErrorMessages({});
         setLoggedInUser(uname);
-        await fetchGrants();
+        await fetchGrants(mode);
       } else {
         setErrorMessages({
           name: body.express.match_username ? "pass" : "uname",
@@ -475,6 +478,13 @@ function AdminPage() {
       console.error('Fetch Error:', error);
     }
   };
+
+  const handleModeToggle = async () => {
+    const newMode = mode === "userQueue" ? "mainDatabase" : "userQueue";
+    setMode(newMode);
+    await fetchGrants(newMode);
+  };
+
   const ExpandedGrantCard = ({ grant }) => {
     const filteredGrant = Object.fromEntries(
       Object.entries(grant).filter(([key]) => key !== 'ID' && key !== 'TIME')
@@ -520,6 +530,14 @@ function AdminPage() {
               <Button type="link" style={{ color: '#1890ff' }} onClick={() => window.location.href = '/'}>
                 Home
               </Button>
+              <Switch
+                checked={mode === "mainDatabase"}
+                onChange={handleModeToggle}
+                checkedChildren={<span style={{ color: '#1890ff' }}>Main Database</span>}
+                unCheckedChildren={<span style={{ color: '#1890ff' }}>User Queue</span>}
+                style={{ backgroundColor: mode === "mainDatabase" ? '#e6f7ff' : '#e6fffc' }}
+                size="large"
+              />
             </div>
           </Header>
           <Content className="admin-content">

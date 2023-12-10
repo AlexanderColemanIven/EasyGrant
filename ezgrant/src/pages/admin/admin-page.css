@@ -104,14 +104,15 @@ input[type="password"] {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px; /* Set a max-width if needed */
+  max-width: 280px;
+  width: 280px;
 }
 
 .amount-column {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100px; /* Set a max-width if needed */
+  max-width: 70px; /* Set a max-width if needed */
 }
 
 .deadline-column {
@@ -146,6 +147,7 @@ input[type="password"] {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 200px;
 }
 
 .expanded-row .title-column {
@@ -153,7 +155,8 @@ input[type="password"] {
   overflow: visible; /* Allow vertical overflow */
   text-overflow: clip; /* No ellipsis */
   vertical-align: top; 
-  max-width: 150px;
+  max-width: 280px;
+  width: 280px;
 }
 
 .expanded-row .amount-column {
@@ -161,7 +164,7 @@ input[type="password"] {
   overflow: visible; /* Allow vertical overflow */
   text-overflow: clip; /* No ellipsis */
   vertical-align: top; 
-  max-width: 100px;
+  max-width: 70px;
 }
 
 .expanded-row .deadline-column {
@@ -201,4 +204,5 @@ input[type="password"] {
   overflow: visible; /* Allow vertical overflow */
   text-overflow: clip; /* No ellipsis */
   vertical-align: top; 
+  width: 200px;
 }

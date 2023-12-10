@@ -179,8 +179,8 @@ app.post('/api/addToDatabase', async (req, res) => {
       DECLARE
         eligibility_list ELIGIBLE_LIST := ELIGIBLE_LIST(${eligibilityArray});
       BEGIN
-        INSERT INTO GRANTOPPORTUNITIES (NAME, LOCATION, LINK, AMOUNT, ABOUT, FREE, ELIGIBILITY, DEADLINE)
-        VALUES (:name, :location, :link, :amount, :about, :free, eligibility_list, :deadline);
+        INSERT INTO GRANTOPPORTUNITIES (NAME, LOCATION, LINK, AMOUNT, ABOUT, FREE, ELIGIBILITY, DEADLINE, ID)
+        VALUES (:name, :location, :link, :amount, :about, :free, eligibility_list, :deadline, :id);
       EXCEPTION
         WHEN DUP_VAL_ON_INDEX THEN
           NULL; -- Ignore duplicate entry error
@@ -196,6 +196,7 @@ app.post('/api/addToDatabase', async (req, res) => {
       about: grant.DESCRIPTION,
       free: grant.FREE,
       deadline: grant.DEADLINE,
+      id: grant.ID
     };
 
     // Execute the SQL query
@@ -223,7 +224,7 @@ app.get('/api/getGrantQueue', async (req, res) => {
   let connection;
   try {
     connection = await oracledb.getConnection();
-    const sql = `SELECT * FROM USERSUBMITTEDGRANTS`;
+    const sql = `SELECT * FROM USERSUBMITTEDGRANTS ORDER BY TO_TIMESTAMP_TZ(TIME, 'YYYY-MM-DD"T"HH24:MI:SS-TZH:TZM') ASC`;
     // Execute the SQL query
     const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
     const grants = await connection.execute(sql, [], options);
@@ -286,16 +287,57 @@ app.get('/api/getMainGrantQueue', async (req, res) => {
   }
 });
 
+// endpoint to get the main database including IDs, only for admin
+app.get('/api/getMainGrantQueueWithID', async (req, res) => {
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const sql = `SELECT ${columns}, ID FROM GRANTOPPORTUNITIES ORDER BY
+    CASE
+      WHEN DEADLINE IS NOT NULL AND TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') >= SYSDATE
+        THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+      ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+    END NULLS LAST,
+    ABS(
+      CASE
+        WHEN DEADLINE IS NOT NULL THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+        ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+      END
+    ) NULLS LAST`;
+    // Execute the SQL query
+    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+    const grants = await connection.execute(sql, [], options);
+    // Log the result and send the response
+    res.send({ express: grants.rows });
+    //await dbConnect.close();
+  } catch (err) {
+    // Log and handle errors
+    console.error(err);
+    res.status(500).send({ error: 'Internal Server Error' });
+  } finally {
+    if (connection) {
+      try {
+        // Release the connection back to the connection pool
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+});
+
 app.post('/api/getGrantByID', async (req, res) => {
   let connection;
   try{
     connection = await oracledb.getConnection();
-    const id = req.body.post;
+    const mode = req.body.post[0];
+    const id = req.body.post[1];
     const binds = {
       id: id
     };
     const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
-    const grant = await connection.execute(`SELECT * FROM USERSUBMITTEDGRANTS WHERE ID = :id FETCH FIRST 1 ROW ONLY`, binds, options);
+    const db = mode === 'userQueue' ? 'USERSUBMITTEDGRANTS' : 'GRANTOPPORTUNITIES';
+    const grant = await connection.execute(`SELECT * FROM ${db} WHERE ID = :id FETCH FIRST 1 ROW ONLY`, binds, options);
     res.json(grant.rows[0]);
     
   }catch(e){
@@ -313,20 +355,31 @@ app.post('/api/getGrantByID', async (req, res) => {
   
 });
 
+function formatDate(inputDate) {
+  if(!inputDate){
+    return '';
+  }
+  const dateObject = new Date(inputDate);
+  const options = { month: 'long', day: 'numeric', year: 'numeric' };
+  return dateObject.toLocaleDateString('en-US', options);
+}
+
 app.post('/api/modifyGrantByID', async (req, res) => {
   let connection;
   try{
     connection = await oracledb.getConnection();
-    const grant = req.body.post;
+    const mode = req.body.post[0];
+    const grant = req.body.post[1];
+    const db = mode === 'userQueue' ? 'USERSUBMITTEDGRANTS' : 'GRANTOPPORTUNITIES';
 
     const eligibilityArray = grant.ELIGIBILITY.map(item => `'${item}'`).join(',');
-
+    grant.DEADLINE = formatDate(grant.DEADLINE);
     const sql = `
-      UPDATE USERSUBMITTEDGRANTS
+      UPDATE ${db}
       SET
         ABOUT = :about,
         AMOUNT = :amount,
-        DEADLINE = TO_DATE(:deadline, 'YYYY-MM-DD'),
+        DEADLINE = :deadline,
         ELIGIBILITY = ELIGIBLE_LIST(${eligibilityArray}),
         FREE = :free,
         LINK = :link,
@@ -352,7 +405,18 @@ app.post('/api/modifyGrantByID', async (req, res) => {
 
     console.log('Rows updated:', result.rowsAffected);
 
-    const fetchSql = `SELECT * FROM USERSUBMITTEDGRANTS`;
+    const fetchSql = mode === 'userQueue' ? `SELECT * FROM ${db} ORDER BY TO_TIMESTAMP_TZ(TIME, 'YYYY-MM-DD"T"HH24:MI:SS-TZH:TZM') ASC` : `SELECT * FROM ${db} ORDER BY
+    CASE
+      WHEN DEADLINE IS NOT NULL AND TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') >= SYSDATE
+        THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+      ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+    END NULLS LAST,
+    ABS(
+      CASE
+        WHEN DEADLINE IS NOT NULL THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+        ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+      END
+    ) NULLS LAST`;
     const grants = await connection.execute(fetchSql, [], options);
     res.json(grants.rows);
   } catch (error) {
