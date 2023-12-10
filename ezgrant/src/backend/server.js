@@ -52,31 +52,38 @@ app.post('/api/database', async (req, res) => {
   let connection;
   try {
     connection = await oracledb.getConnection();
-    // Extract features, generate SQL, and get binds
-    const features = await qp.extractFeatures(req.body.post);
-    const sql = qp.generate_query(features);
-    const binds = qp.get_binds(features);
-    // Execute the SQL query
-    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
-    const retval = await connection.execute(sql, binds, options);
-    /*
-    retval.rows.sort((a, b) => {
-      const scoreA = calculateSimilarity(a, features);
-      const scoreB = calculateSimilarity(b, features);
+    if(req.body.post === ''){
+      const sql = `SELECT * FROM GRANTOPPORTUNITIES ORDER BY
+      CASE
+        WHEN DEADLINE IS NOT NULL AND TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') >= SYSDATE
+          THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+        ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+      END NULLS LAST,
+      ABS(
+        CASE
+          WHEN DEADLINE IS NOT NULL THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+          ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+        END
+      ) NULLS LAST`;
+      // Execute the SQL query
+      const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+      const grants = await connection.execute(sql, [], options);
+      // Log the result and send the response
+      res.send({ express: grants.rows });
+    }
+    else{
+      // Extract features, generate SQL, and get binds
+      const features = await qp.extractFeatures(req.body.post);
+      const sql = qp.generate_query(features);
+      const binds = qp.get_binds(features);
+      // Execute the SQL query
+      const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+      const retval = await connection.execute(sql, binds, options);
 
-      // Compare scores for sorting
-      if (scoreB !== scoreA) {
-          return scoreB - scoreA; // Sort by custom score
-      }
-      // If scores are equal, perform secondary sort based on AMOUNT
-      return parseInt(b.AMOUNT) - parseInt(a.AMOUNT);
-      
-  });
-  */
-
-    // Log the result and send the response
-    res.send({ express: retval.rows });
-    //await dbConnect.close();
+      // Log the result and send the response
+      res.send({ express: retval.rows });
+      //await dbConnect.close();
+    }
   } catch (err) {
     // Log and handle errors
     console.error(err);
@@ -235,7 +242,46 @@ app.get('/api/getGrantQueue', async (req, res) => {
       }
     }
   }
-  
+});
+
+
+// endpoint to get the main database
+app.get('/api/getMainGrantQueue', async (req, res) => {
+  let connection;
+  try {
+    connection = await oracledb.getConnection();
+    const sql = `SELECT * FROM GRANTOPPORTUNITIES ORDER BY
+    CASE
+      WHEN DEADLINE IS NOT NULL AND TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') >= SYSDATE
+        THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+      ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+    END NULLS LAST,
+    ABS(
+      CASE
+        WHEN DEADLINE IS NOT NULL THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
+        ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
+      END
+    ) NULLS LAST`;
+    // Execute the SQL query
+    const options = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+    const grants = await connection.execute(sql, [], options);
+    // Log the result and send the response
+    res.send({ express: grants.rows });
+    //await dbConnect.close();
+  } catch (err) {
+    // Log and handle errors
+    console.error(err);
+    res.status(500).send({ error: 'Internal Server Error' });
+  } finally {
+    if (connection) {
+      try {
+        // Release the connection back to the connection pool
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 });
 
 app.post('/api/getGrantByID', async (req, res) => {

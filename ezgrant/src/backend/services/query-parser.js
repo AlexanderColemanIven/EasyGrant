@@ -339,7 +339,8 @@ function generate_query(features){
   else if (features.location){
     restrictives.push(`UPPER(LOCATION) LIKE :location`);
   } 
-
+  
+  let eligibilitySQL = '';
   if(features.tags[0] !== ''){ // I promise its not worth understanding why this equivalency is needed
     const tagSQL = features.tags
   .filter(tag => tag !== '')
@@ -347,20 +348,19 @@ function generate_query(features){
   UPPER(COLUMN_VALUE) LIKE :tag${index}
   `
   )
-  .join(' OR ');
+  .join(' AND ');
 
-restrictives.push(`
-  (
-    EXISTS (
-      SELECT 1
-      FROM TABLE(CAST(ELIGIBILITY AS POSTSVC.ELIGIBLE_LIST)) el
-      WHERE ${tagSQL}
-    )
-  )
-`);
-  }
+  eligibilitySQL = `
+      EXISTS (
+        SELECT 1
+        FROM TABLE(CAST(ELIGIBILITY AS POSTSVC.ELIGIBLE_LIST)) el
+        WHERE ${tagSQL}
+      )
+    `;
+}
   
-  const preQuery = restrictives.length > 0 ? restrictives.join(' AND ') : "";
+  const preQuery = restrictives.length > 0 ? restrictives.join(' AND ') : '';
+  const finalQuery = preQuery + (preQuery && eligibilitySQL ? ' OR ' : '') + eligibilitySQL;
 
   const columnsToCheck = ['name', 'about'];
   
@@ -392,22 +392,21 @@ ORDER BY
     END
   ) NULLS LAST`;
 
-  if(preQuery && !sqlConditions){
-    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${preQuery} ${sortCondition}`;
+  if(finalQuery && !sqlConditions){
+    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${finalQuery} ${sortCondition}`;
     return sqlStatement;
   }
-  if(!preQuery && sqlConditions){
+  if(!finalQuery && sqlConditions){
     const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${sqlConditions} ${sortCondition}`;
     return sqlStatement;
   }
-  if(!preQuery && !sqlConditions){
+  if(!finalQuery && !sqlConditions){
     const sqlStatement = `SELECT 1 FROM DUAL WHERE 1 = 0`;
     return sqlStatement;
   }
   
-  const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${preQuery} OR ${sqlConditions} ${sortCondition}`;
+  const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${finalQuery} OR ${sqlConditions} ${sortCondition}`;
   return sqlStatement;
-  
 }
 
 module.exports.generate_query = generate_query;
