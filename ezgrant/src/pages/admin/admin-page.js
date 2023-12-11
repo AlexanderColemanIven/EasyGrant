@@ -107,20 +107,24 @@ function AdminPage() {
   
   const handleModalCancel = () => {
     // Close the modal
-    setOpenModalFor(null);
-    setPopupData(null);
-    setFormValues({
-      NAME: '',
-      LOCATION: '',
-      LINK: '',
-      AMOUNT: '',
-      ABOUT: '',
-      FREE: '',
-      ELIGIBILITY: '',
-      DEADLINE: '',
-      ID: '',
-    });
-
+    if (isViewing) {
+      setIsViewing(false);
+      setSelectedGrant(null);
+    } else {
+      setOpenModalFor(null);
+      setPopupData(null);
+      setFormValues({
+        NAME: '',
+        LOCATION: '',
+        LINK: '',
+        AMOUNT: '',
+        ABOUT: '',
+        FREE: '',
+        ELIGIBILITY: '',
+        DEADLINE: '',
+        ID: '',
+      });
+    }
     console.log('Modal closed');
   };
 
@@ -504,8 +508,8 @@ function AdminPage() {
     return (
       <div className="expanded-card">
         {Object.entries(filteredGrant).map(([key, value]) => (
-          <div key={key}>
-            <span className="grant-field-name">{key}</span>:
+          <div key={key} className="grant-field">
+            <span className="grant-field-name">{key}:</span>
             {key === 'ELIGIBILITY' ? (
               <div className="ellipsis-text">
                 {value.map((eligibility, index) => (
@@ -522,6 +526,11 @@ function AdminPage() {
       </div>
     );
   };
+
+  const redirectToHome = () => {
+    window.location.href = '/';
+  };
+  
   return (
     <div className="admin-page">
       <header className="home-page-title">
@@ -531,26 +540,34 @@ function AdminPage() {
       </header>
       {isSubmitted ? (
         <Layout style={{ minHeight: '100vh', minWidth: '100vw' }}>
-          <Header className="admin-header">
-            <div className="admin-user-info">
-              <Dropdown overlay={menu}>
-                <a className="ant-dropdown-link" onClick={(e) => e.preventDefault()}>
-                  {loggedInUser} <UserOutlined />
-                </a>
-              </Dropdown>
-              <Button type="link" style={{ color: '#1890ff' }} onClick={() => window.location.href = '/'}>
-                Home
-              </Button>
-              <Switch
-                checked={mode === "mainDatabase"}
-                onChange={handleModeToggle}
-                checkedChildren={<span style={{ color: '#1890ff' }}>Main Database</span>}
-                unCheckedChildren={<span style={{ color: '#1890ff' }}>User Queue</span>}
-                style={{ backgroundColor: mode === "mainDatabase" ? '#e6f7ff' : '#e6fffc' }}
-                size="large"
-              />
-            </div>
-          </Header>
+          <header className="admin-header">
+            <div className="home-site-logo" onClick={redirectToHome}>
+                EasyGrants admin
+              </div>
+              <div className="action-buttons">
+                <div className="nav-buttons">
+                  <Button onClick={() => window.location.href="/postGrantsUser"}>Post a Grant</Button>
+                  <Button>About Us</Button>
+                </div>
+                <div className="admin-buttons">
+                <Switch
+                  className="db-toggle"
+                  checked={mode === "mainDatabase"}
+                  onChange={handleModeToggle}
+                  checkedChildren={<span style={{ color: '#1890ff' }}>Main Database</span>}
+                  unCheckedChildren={<span style={{ color: '#1890ff' }}>User Queue</span>}
+                  style={{ backgroundColor: mode === "mainDatabase" ? '#e6f7ff' : '#ffffff',
+                          marginTop: '6px' 
+                        }}
+                />
+                <Dropdown overlay={menu}>
+                  <a className="ant-dropdown-link" onClick={(e) => e.preventDefault()}>
+                    {loggedInUser} <UserOutlined />
+                  </a>
+                </Dropdown>
+                </div>
+              </div>
+          </header>
           <Content className="admin-content">
             {isViewing && selectedGrant && (
               <Modal
@@ -583,10 +600,10 @@ function AdminPage() {
       ) : (
         <div className="admin-signin-container admin-signin-background">
           <div className="admin-page-title">Sign In</div>
-          <Form form={form} onFinish={handleSubmit}>
+          <Form form={form} onFinish={handleSubmit} colon={false} className="login-form">
             <Form.Item
               data-testid="username-input"
-              label="Username"
+              label={<label style={{ color: "white" }}>Username</label>}
               name="uname"
               rules={[{ required: true, message: 'Please input your username!' }]}
             >
@@ -594,7 +611,7 @@ function AdminPage() {
             </Form.Item>
             <Form.Item
               data-testid="password-input"
-              label="Password"
+              label={<label style={{ color: "white" }}>Password</label>}
               name="pass"
               rules={[{ required: true, message: 'Please input your password!' }]}
             >

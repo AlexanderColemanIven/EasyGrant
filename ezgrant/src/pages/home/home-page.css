@@ -8,6 +8,7 @@ body {
 /* Header */
 .home-site-header {
   background-color: #006aff;
+  height:70px;
   color: white;
   padding: 4px 20px;
   display: flex;
