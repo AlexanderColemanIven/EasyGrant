@@ -24,6 +24,7 @@ function AdminPage() {
   const [popupData, setPopupData] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [mode, setMode] = useState("userQueue");
+  const [openModalFor, setOpenModalFor] = useState(null);
   const [expandedRowKeys, setExpandedRowKeys] = useState(new Set());
   const [formValues, setFormValues] = useState({
     NAME: '',
@@ -68,7 +69,8 @@ function AdminPage() {
       console.error('Error during delete operation:', error);
     }
   };
-  const handleModify = async (grant, mode) => {
+  
+  const handleModify = async (grant) => {
     try {
       const response = await fetch('/api/getGrantByID', {
         method: 'POST',
@@ -77,9 +79,9 @@ function AdminPage() {
         },
         body: JSON.stringify({ post: [mode, grant.ID] }),
       });
-
+  
       const body = await response.json();
-
+  
       const formattedDeadline = body.DEADLINE ? dayjs(body.DEADLINE).format('YYYY-MM-DD') : '';
       console.log(body);
       setPopupData(body); // Set the data for the popup
@@ -94,15 +96,32 @@ function AdminPage() {
         DEADLINE: formattedDeadline || '',
         ID: body.ID || '',
       });
-      setIsModalVisible(true); // Show the modal
+  
+      // Open the modal for the current row
+      setOpenModalFor(grant.ID);
+  
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
-
+  
   const handleModalCancel = () => {
-    setIsModalVisible(false); // Hide the modal
-    setSelectedGrant(null);
+    // Close the modal
+    setOpenModalFor(null);
+    setPopupData(null);
+    setFormValues({
+      NAME: '',
+      LOCATION: '',
+      LINK: '',
+      AMOUNT: '',
+      ABOUT: '',
+      FREE: '',
+      ELIGIBILITY: '',
+      DEADLINE: '',
+      ID: '',
+    });
+
+    console.log('Modal closed');
   };
 
   useEffect(() => {
@@ -378,14 +397,6 @@ function AdminPage() {
           { <button onClick={() => handleModify(record, mode)}>Modify</button> }
           { <button onClick={() => handleDelete(record, mode)}>Delete</button> }
           {/* Modal */}
-          <Modal
-            title={popupData ? `Modifying Grant: ${popupData.NAME}` : 'Modifying Grant'}
-            open={isModalVisible}
-            onCancel={handleModalCancel}
-            footer={null} // No need for the default modal footer in this case
-          >
-            {renderModalContent()}
-          </Modal>
         </span>
       ),
     },
@@ -547,12 +558,23 @@ function AdminPage() {
                 visible={isViewing}
                 onCancel={handleModalCancel}
                 footer={null}
+                
               >
                 <ExpandedGrantCard grant={selectedGrant} />
               </Modal>
             )}
+            {openModalFor !== null && (
+              <Modal
+                title={popupData ? `Modifying Grant: ${popupData.NAME}` : 'Modifying Grant'}
+                visible={openModalFor !== null}
+                onCancel={handleModalCancel}
+                footer={null}
+              >
+                {renderModalContent()}
+              </Modal>
+            )}
             {grants.length > 0 ? (
-              <Table dataSource={grants} columns={columns} rowKey="id" onRow={onRow} />
+              <Table dataSource={grants} columns={columns} rowKey="id" onRow={onRow} rowClassName="row"/>
             ) : (
               <Empty description="No user-submitted grants yet!" />
             )}
