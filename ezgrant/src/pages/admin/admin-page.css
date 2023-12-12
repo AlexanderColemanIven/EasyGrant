@@ -106,6 +106,7 @@ input[type="password"] {
 .admin-buttons .ant-dropdown-link{
   margin-top: 7px;
   font-size: 20px;
+  cursor: pointer;
 }
 
 .nav-buttons {
@@ -131,6 +132,7 @@ input[type="password"] {
 .admin-header .home-site-logo {
   margin-left: 20px;
   margin-top: 20px;
+  cursor: pointer;
 }
 
 .nav-buttons Button {
@@ -139,6 +141,7 @@ input[type="password"] {
   background: none;
   color:white;
   box-shadow: none;
+  cursor: pointer;
 }
 
 .expanded-row {
