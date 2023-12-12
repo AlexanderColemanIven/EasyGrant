@@ -80,7 +80,7 @@ const HomePage = () => {
           EasyGrants
         </div>
         <div className="action-buttons">
-          <Button onClick={() => window.location.href="/postGrantsUser"}>Post a Grant</Button>
+          <Button onClick={() => window.location.href="/post-grant"}>Post a Grant</Button>
           <Button>About Us</Button>
         </div>
       </header>

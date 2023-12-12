@@ -546,7 +546,7 @@ function AdminPage() {
               </div>
               <div className="action-buttons">
                 <div className="nav-buttons">
-                  <Button onClick={() => window.location.href="/postGrantsUser"}>Post a Grant</Button>
+                  <Button onClick={() => window.location.href="/post-grant"}>Post a Grant</Button>
                   <Button>About Us</Button>
                 </div>
                 <div className="admin-buttons">

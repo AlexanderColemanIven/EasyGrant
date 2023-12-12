@@ -121,7 +121,7 @@ app.post('/api/addToGrantQueue', async (req, res) => {
     const grant = req.body;
     grant.id = uuidv4();
 
-    const eligibilityArray = grant.ELIGIBILITY.map(item => `'${item}'`).join(',');
+    const eligibilityArray = grant.ELIGIBILITY ? grant.ELIGIBILITY.map(item => `'${item}'`).join(',') : '';
     const sql = `
       DECLARE
         eligibility_list ELIGIBLE_LIST := ELIGIBLE_LIST(${eligibilityArray});
@@ -174,7 +174,7 @@ app.post('/api/addToDatabase', async (req, res) => {
     connection = await oracledb.getConnection();
     const grant = req.body;
 
-    const eligibilityArray = grant.ELIGIBILITY.map(item => `'${item}'`).join(',');
+    const eligibilityArray = grant.ELIGIBILITY ? grant.ELIGIBILITY.map(item => `'${item}'`).join(',') : '';
     const sql = `
       DECLARE
         eligibility_list ELIGIBLE_LIST := ELIGIBLE_LIST(${eligibilityArray});

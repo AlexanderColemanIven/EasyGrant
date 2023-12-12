@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route }
     from 'react-router-dom';
 import HomePage from './pages/home';
 import AdminPage from './pages/admin';
-import GrantPostUserPage from './pages/postGrantUser';
+import GrantPostUserPage from './pages/post-grant';
 
 function App() {
     return (
@@ -12,7 +12,7 @@ function App() {
             <Routes>
                 <Route exact path='/' element={<HomePage />} />
                 <Route path='/admin' element={<AdminPage />} />
-                <Route path='/postGrantsUser/' element={<GrantPostUserPage />} />
+                <Route path='/post-grant' element={<GrantPostUserPage />} />
             </Routes>
         </Router>
     );
