@@ -43,16 +43,6 @@ input[type="password"] {
   border-radius: 10px;
 }
 
-.admin-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: right;
-  width: 100%;
-  height: 64px;
-  position: fixed;
-  top:0
-}
-
 .admin-user-info {
   display: flex-end;
   gap: 10px;  /* This will add a small gap between the user dropdown and the home button */
@@ -102,8 +92,8 @@ input[type="password"] {
 .action-buttons {
   display: flex;
   justify-content: center;
-  gap: 20px;
   margin-left: 20px;
+  margin-right: 20px;
 }
 
 .admin-buttons {
@@ -113,6 +103,11 @@ input[type="password"] {
   margin-left: 20px;
 }
 
+.admin-buttons .ant-dropdown-link{
+  margin-top: 7px;
+  font-size: 20px;
+}
+
 .nav-buttons {
   display: flex;
   justify-content: center;
@@ -120,9 +115,51 @@ input[type="password"] {
   margin-left: 20px;
 }
 
+.admin-header {
+  background-color: #006aff;
+  color: white;
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  font-size: 24px;
+  height: 70px;
+  width: 100%;
+  top:0;
+}
+
+.admin-header .home-site-logo {
+  margin-left: 20px;
+  margin-top: 20px;
+}
+
+.nav-buttons Button {
+  font-size: 20px; /* Adjust the font size as needed */
+  border: none;
+  background: none;
+  color:white;
+  box-shadow: none;
+}
+
 .expanded-row {
   overflow: hidden; /* Ensure content doesn't overflow during animation */
   transition: height 0.5s ease; /* Adjust the duration and easing as needed */
+}
+
+.row-button {
+  background-color: white;
+  border: 1px solid rgb(90, 89, 89);
+  color: black;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-right: 4px;
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.row-button:hover {
+  background-color: black;
+  border-color: white;
+  color: white;
 }
 
 .title-column {
@@ -265,15 +302,7 @@ input[type="password"] {
   white-space: normal;
 }
 
-.admin-header {
-  background-color: #006aff;
-  color: white;
-  position: fixed;
-  z-index: 1000;
-  padding: 4px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 24px;
-  height: 70px;
+.toggle-switch {
+  margin-top: -20px;
+  padding-bottom: 20px;
 }

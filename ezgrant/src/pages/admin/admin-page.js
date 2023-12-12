@@ -396,11 +396,10 @@ function AdminPage() {
       className: 'actions-column',
       render: (text, record) => (
         <span>
-          { <button onClick={() => handleView(record)}>All Info</button> }
-          { mode === "userQueue" && <button onClick={() => handleAccept(record, mode)}>Accept</button> }
-          { <button onClick={() => handleModify(record, mode)}>Modify</button> }
-          { <button onClick={() => handleDelete(record, mode)}>Delete</button> }
-          {/* Modal */}
+          {<button className="row-button" onClick={() => handleView(record)}>All Info</button>}
+          {mode === "userQueue" && <button className="row-button" onClick={() => handleAccept(record, mode)}>Accept</button>}
+          {<button className="row-button" onClick={() => handleModify(record, mode)}>Modify</button>}
+          {<button className="row-button" onClick={() => handleDelete(record, mode)}>Delete</button>}
         </span>
       ),
     },
@@ -550,16 +549,6 @@ function AdminPage() {
                   <Button>About Us</Button>
                 </div>
                 <div className="admin-buttons">
-                <Switch
-                  className="db-toggle"
-                  checked={mode === "mainDatabase"}
-                  onChange={handleModeToggle}
-                  checkedChildren={<span style={{ color: '#1890ff' }}>Main Database</span>}
-                  unCheckedChildren={<span style={{ color: '#1890ff' }}>User Queue</span>}
-                  style={{ backgroundColor: mode === "mainDatabase" ? '#e6f7ff' : '#ffffff',
-                          marginTop: '6px' 
-                        }}
-                />
                 <Dropdown overlay={menu}>
                   <a className="ant-dropdown-link" onClick={(e) => e.preventDefault()}>
                     {loggedInUser} <UserOutlined />
@@ -590,6 +579,18 @@ function AdminPage() {
                 {renderModalContent()}
               </Modal>
             )}
+            <div className="toggle-switch">
+                <Switch
+                  className="db-toggle"
+                  checked={mode === "mainDatabase"}
+                  onChange={handleModeToggle}
+                  checkedChildren={<span style={{ color: '#1890ff' }}>Main Database</span>}
+                  unCheckedChildren={<span style={{ color: '#1890ff' }}>User Queue</span>}
+                  style={{ backgroundColor: mode === "mainDatabase" ? '#e6f7ff' : '#ffffff',
+                          marginTop: '6px'
+                        }}
+                />
+            </div>
             {grants.length > 0 ? (
               <Table dataSource={grants} columns={columns} rowKey="id" onRow={onRow} rowClassName="row"/>
             ) : (
@@ -598,6 +599,18 @@ function AdminPage() {
           </Content>
         </Layout>
       ) : (
+        <>
+        <header className="admin-header">
+            <div className="home-site-logo" onClick={redirectToHome}>
+                EasyGrants admin
+              </div>
+              <div className="action-buttons">
+                <div className="nav-buttons">
+                  <Button onClick={() => window.location.href="/post-grant"}>Post a Grant</Button>
+                  <Button>About Us</Button>
+                </div>
+              </div>
+          </header>
         <div className="admin-signin-container admin-signin-background">
           <div className="admin-page-title">Sign In</div>
           <Form form={form} onFinish={handleSubmit} colon={false} className="login-form">
@@ -627,7 +640,7 @@ function AdminPage() {
             )}
           </Form>
         </div>
-      )}
+        </>)}
     </div>
   );
   

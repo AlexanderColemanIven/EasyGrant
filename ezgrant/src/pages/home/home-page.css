@@ -8,18 +8,28 @@ body {
 /* Header */
 .home-site-header {
   background-color: #006aff;
-  height:70px;
   color: white;
-  padding: 4px 20px;
+  position: fixed;
+  z-index: 1000;
   display: flex;
   justify-content: space-between;
-  align-items: center;
   font-size: 24px;
+  height: 70px;
+  width: 100%;
+  top:0;
 }
 
-/* Logo */
-.home-site-logo {
-  cursor: pointer;
+.home-site-header .home-site-logo {
+  margin-left: 20px;
+  margin-top: 20px;
+}
+
+.action-buttons Button {
+  font-size: 20px;
+  border: none;
+  background: none;
+  color:white;
+  box-shadow: none;
 }
 
 .home-page-container {

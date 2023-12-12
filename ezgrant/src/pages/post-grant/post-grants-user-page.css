@@ -1,18 +1,28 @@
 .post-grants-header {
-    background-color: #006aff;
-    height:70px;
-    color: white;
-    padding: 4px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 24px;
-  }
-  
-  /* Logo */
-  .home-site-logo {
-    cursor: pointer;
-  }
+  background-color: #006aff;
+  color: white;
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  font-size: 24px;
+  height: 70px;
+  width: 100%;
+  top:0;
+}
+
+.post-grants-header .home-site-logo {
+  margin-left: 20px;
+  margin-top: 20px;
+}
+
+.action-buttons Button {
+  font-size: 20px; /* Adjust the font size as needed */
+  border: none;
+  background: none;
+  color:white;
+  box-shadow: none;
+}
 
   .form-container {
     display: grid;
