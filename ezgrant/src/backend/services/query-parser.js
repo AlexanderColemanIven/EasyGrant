@@ -63,6 +63,7 @@ const {
   moreThanExpressions, 
   lessThanExpressions, 
  } = require('./keywords');
+const { delimiter } = require('path');
 
 const SCHEMA = "POSTSVC"
 const TABLE = "GRANTOPPORTUNITIES"
@@ -208,7 +209,7 @@ async function extractFeatures(input) {
     features.secondaryDeadline = updatedDateString;
   }
 
-  input = input.replace(features.location, "");
+  //input = input.replace(features.location, "");
   input = input.replace(features.deadline, "");
   doc_query = nlp(input);
 
@@ -300,6 +301,10 @@ END`;
 
 
 function generate_query(features){
+  let amountCase ='';
+  let locationCase='';
+  let tagCase='';
+  let leftoverCase='';
   let restrictives = [];
   if(features.secondaryDeadline){ //then we have an amount and a deadline which can conflict
     const regex = /([><=]+)\s*([\d.]+)/;
@@ -308,12 +313,20 @@ function generate_query(features){
       AND TO_NUMBER(REGEXP_REPLACE(AMOUNT, '[^0-9]+', '')) ${match[1]} :amount AND 
       ${convertSQLDate()} ${features.deadline[0]} TO_DATE(:deadline, 'YYYY-MM-DD')) OR 
       ${convertSQLDate()} <= TO_DATE(:secondaryDeadline, 'YYYY-MM-DD'))`);
+      amountCase = `CASE
+      WHEN TO_NUMBER(REGEXP_REPLACE(AMOUNT, '[^0-9]+', '')) >= :amount THEN 1
+      ELSE 0
+    END +`
   }else{
     if (features.amount){
       const regex = /([><=]+)\s*([\d.]+)/;
       const match = features.amount.match(regex);
       restrictives.push(`AMOUNT IS NOT NULL 
       AND TO_NUMBER(REGEXP_REPLACE(AMOUNT, '[^0-9]+', '')) ${match[1]} :amount`);
+      amountCase = `CASE
+      WHEN TO_NUMBER(REGEXP_REPLACE(AMOUNT, '[^0-9]+', '')) >= :amount THEN 1
+      ELSE 0
+    END +`
     }
 
     if (features.deadline){
@@ -335,21 +348,29 @@ function generate_query(features){
       OR UPPER(LOCATION) LIKE '% ' || :stateAbbrev || ')'
       OR UPPER(LOCATION) LIKE '% ' || :stateAbbrev || ',%'
       OR UPPER(LOCATION) = :stateAbbrev)`);
+      locationCase = `CASE
+      WHEN UPPER(LOCATION) LIKE :location THEN 1
+      ELSE 0
+    END +`
   }
   else if (features.location){
     restrictives.push(`UPPER(LOCATION) LIKE :location`);
+    locationCase = `CASE
+    WHEN UPPER(LOCATION) LIKE :location THEN 1
+    ELSE 0
+  END +`
   } 
-  
+
+  features.tags = features.tags.filter(tag => tag !== '');
   let eligibilitySQL = '';
-  if(features.tags[0] !== ''){ // I promise its not worth understanding why this equivalency is needed
+  if(features.tags.length > 0){
     const tagSQL = features.tags
-  .filter(tag => tag !== '')
-  .map((tag, index) => `
+    .map((tag, index) => `
   UPPER(COLUMN_VALUE) LIKE :tag${index}
   `
   )
-  .join(' AND ');
-
+  .join(' OR ');
+  
   eligibilitySQL = `
       EXISTS (
         SELECT 1
@@ -357,9 +378,16 @@ function generate_query(features){
         WHERE ${tagSQL}
       )
     `;
+  
+    tagCase = features.tags.filter(tag => tag !== '').map((tag, idx) => 
+    `CASE
+    WHEN EXISTS (SELECT 1 FROM TABLE(CAST(ELIGIBILITY AS POSTSVC.ELIGIBLE_LIST)) el WHERE UPPER(COLUMN_VALUE) LIKE :tag${idx}) THEN 2
+    ELSE 0
+    END +`
+    ).join(' ');
 }
   
-  const preQuery = restrictives.length > 0 ? restrictives.join(' AND ') : '';
+  const preQuery = restrictives.length > 0 ? restrictives.join(' OR ') : '';
   const finalQuery = preQuery + (preQuery && eligibilitySQL ? ' OR ' : '') + eligibilitySQL;
 
   const columnsToCheck = ['name', 'about'];
@@ -370,16 +398,25 @@ function generate_query(features){
     : variable_delimeter(conditional_and());
     if(keyword.charAt(0) === '-'){ // handle exclusion
       return delimeter + columnsToCheck.map(column => {
+        leftoverCase += `CASE
+      WHEN (UPPER(name) LIKE :keyword0 OR UPPER(about) LIKE :keyword${idx}) THEN 1
+      ELSE 0
+        END + `
         return negate_inflectional(column, idx);
       }).join(conditional_and());
     }
     return delimeter + columnsToCheck.map(column => {
+      leftoverCase += `CASE
+      WHEN (UPPER(name) LIKE :keyword0 OR UPPER(about) LIKE :keyword${idx}) THEN 1
+      ELSE 0
+        END + `
       return inflectional(column, idx);
     }).join(conditional_or());
   }).join('') + ')' : '';
 
   const sortCondition = `
 ORDER BY
+MATCHED_COLUMNS_COUNT DESC,
   CASE
     WHEN DEADLINE IS NOT NULL AND TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') >= SYSDATE
       THEN TO_DATE(DEADLINE, 'Month DD, YYYY', 'NLS_DATE_LANGUAGE=ENGLISH') - SYSDATE
@@ -391,13 +428,32 @@ ORDER BY
       ELSE TO_DATE('9999-12-31', 'YYYY-MM-DD') - SYSDATE
     END
   ) NULLS LAST`;
+  
+  let matchedColumnsCount = '';
+  if (amountCase) {
+    matchedColumnsCount += amountCase + ' ';
+  }
+  
+  if (locationCase) {
+    matchedColumnsCount += locationCase + ' ';
+  }
+  
+  if (tagCase) {
+    matchedColumnsCount += tagCase + ' ';
+  }
+  
+  if (leftoverCase) {
+    matchedColumnsCount += leftoverCase + '';
+  }
 
+  matchedColumnsCount = matchedColumnsCount.slice(0, -2);
+  
   if(finalQuery && !sqlConditions){
-    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${finalQuery} ${sortCondition}`;
+    const sqlStatement = `SELECT t.*, ${matchedColumnsCount} AS "MATCHED_COLUMNS_COUNT" FROM ${TABLE} t WHERE ${finalQuery} ${sortCondition}`;
     return sqlStatement;
   }
   if(!finalQuery && sqlConditions){
-    const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${sqlConditions} ${sortCondition}`;
+    const sqlStatement = `SELECT t.*, ${matchedColumnsCount} AS "MATCHED_COLUMNS_COUNT" FROM ${TABLE} t WHERE ${sqlConditions} ${sortCondition}`;
     return sqlStatement;
   }
   if(!finalQuery && !sqlConditions){
@@ -405,7 +461,7 @@ ORDER BY
     return sqlStatement;
   }
   
-  const sqlStatement = `SELECT * FROM ${TABLE} WHERE ${finalQuery} OR ${sqlConditions} ${sortCondition}`;
+  const sqlStatement = `SELECT t.*, ${matchedColumnsCount} AS "MATCHED_COLUMNS_COUNT" FROM ${TABLE} t WHERE ${finalQuery} OR ${sqlConditions} ${sortCondition}`;
   return sqlStatement;
 }
 
